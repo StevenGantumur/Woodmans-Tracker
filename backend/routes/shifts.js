@@ -1,4 +1,6 @@
 // backend/routes/shifts.js
+
+// This won't be worked on just yet, this is the shifts of each worker, but not the main workflow that I want to finish first.
 const express = require('express');
 const router = express.Router();
 

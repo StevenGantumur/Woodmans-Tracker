@@ -4,6 +4,10 @@
 // useEffect lets you run code (fetch) after the component loads.
 import { useEffect, useState } from 'react';
 
+// Importing the ksx files
+import CorralList from 'frontend/components/CorralList';
+import UpdateForm from 'frontend/components/UpdateForm';
+
 // We want to display the cart count from the Express backend to our React frontend. We will connect them here.
 
 function App() {
@@ -28,11 +32,8 @@ function App() {
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Cart Corrals</h1>
-      {Object.entries(corrals).map(([corral, count]) => (
-        <div key={corral}>
-          Corral {corral}: {count} carts
-        </div>
-      ))}
+      <CorralList corrals={corrals} />
+      <UpdateForm />
     </div>
   );
 }
