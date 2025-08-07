@@ -4,9 +4,9 @@
 // useEffect lets you run code (fetch) after the component loads.
 import { useEffect, useState } from 'react';
 
-// Importing the ksx files
-import CorralList from 'frontend/components/CorralList';
-import UpdateForm from 'frontend/components/UpdateForm';
+// Importing the jsx files
+import CorralList from "./Components/CorralList";
+import UpdateForm from "./Components/UpdateForm";
 
 // We want to display the cart count from the Express backend to our React frontend. We will connect them here.
 
