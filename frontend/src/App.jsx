@@ -26,14 +26,20 @@ function App() {
       .catch(err => console.error('Fetch error:', err));
   }, []);
 
-
+  // Function to update corrals (will be called updateForm)
+  const updateCorrals = (newData) => {
+    console.log("updateCorrals called with:", newData); // debug
+    // Replace old data with updated data
+    setCorrals(newData);
+  };
+ 
   // Rendering the UI
   // Converts the entries into a readable array format.
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Cart Corrals</h1>
       <CorralList corrals={corrals} />
-      <UpdateForm />
+      <UpdateForm updateCorrals={updateCorrals} />
     </div>
   );
 }

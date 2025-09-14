@@ -12,25 +12,46 @@ function UpdateForm() {
     const [corral, setCorral] = useState('');
     const [count, setCount] = useState('');
 
+    // Called when form is submitted
     const handleSubmit = async (e) => {
         // Prevents reloading the page (default form behavior)
         e.preventDefault();
+        
+        try {
+            // send a POST request to backend API
+            const res = await fetch('http://localhost:3001/api/corrals', {
+                method: 'POST', // Tells server this is a POST request
+                headers: {
+                    'Content-Type': 'applicati  on/json', // Sending JSON data
+                },
+                // Turn JS object into a JSON string for sending
+                body: JSON.stringify({
+                    corral_id: corral,  // User entered corral ID
+                    count: parseInt(count, 10), // User entered count (NOTE: This will be replaced by a real time update through RFID sensors in corrals)
+                }),
+            });
+            
+            // Checks if the server is OK, if not throws error
+            if(!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
 
-        // Send the POST request here using fetch
-        fetch('http://localhost:3001/api/corrals', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                corral_id: corral,
-                count: parseInt(count, 10) // assuming it's a number
-              })
-        }).then(res => {
-                res.json()
-            })
-            .then(data => console.log(data))
-            .catch(error => console.log('ERROR'))
+            // Convert the server response from a JSON String into a JS Object
+            const data = await res.json();
+
+            console.log("POST response:", data); // Debug: see what backend sent back
+
+            // Call the function from App.jsx to update corrals state
+            updateCorrals(data);
+
+            // Reset form fields back to empty strings
+            setCorral('');
+            setCount('');
+        }
+        catch (err) {
+            // If something goes wrong in fetch or response pairing, log it to see whats wrong
+            console.error("Error during POST", err)
+        }
     };
 
 
@@ -40,7 +61,7 @@ function UpdateForm() {
                 type="text"
                 placeholder="Corral Letter (esg. A)"
                 value={corral}
-                onChange={(e) => setCorral(e.target.value)}
+                onChange={(e) => setCorral(e.target.value)} // Update local state as user types
             />
             <input
             type="number"
