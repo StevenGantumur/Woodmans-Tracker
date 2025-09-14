@@ -21,7 +21,7 @@ router.get('/', (req, res) => {
 
 // Starts a post route at /api/corrals/update
 // Extracts corral_id and count
-router.post('/update', (req, res) => {
+router.post('/', (req, res) => {
   const { corral_id, count } = req.body;
 
   //Invalid input

@@ -14,7 +14,7 @@ function App() {
   // Initializes an empty object that will later hold the data of the cart count from the server.
   const [corrals, setCorrals] = useState({});
 
-
+  
   // Fetch from your backend (GET /api/corrals).
   useEffect(() => {
     fetch('http://localhost:3001/api/corrals')
