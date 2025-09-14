@@ -1,7 +1,7 @@
 // UpdateForm.jsx
 
-// Imports useState hook from React: using it for tracking user input in form
-import { useState } from 'react';
+// Import useState from React so we can track user input values (corral + count)
+import { useState } from "react";
 
 
 // Declares new function named UpdateForm
@@ -74,6 +74,5 @@ function UpdateForm({ updateCorrals }) {
     )
 }
 
-
-
+//  Export component so App.jsx can import and render it
 export default UpdateForm;
