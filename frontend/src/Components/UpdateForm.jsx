@@ -42,7 +42,7 @@ function UpdateForm({ updateCorrals }) {
             console.log("POST response:", data); // Debug: see what backend sent back
 
             // Call the function from App.jsx to update corrals state
-            updateCorrals(data.currentStatus);
+            updateCorrals(data.currentStatus, corral);
 
             // Reset form fields back to empty strings
             setCorral('');
@@ -59,7 +59,7 @@ function UpdateForm({ updateCorrals }) {
         <form onSubmit={handleSubmit}>
             <input
                 type="text"
-                placeholder="Corral Letter (esg. A)"
+                placeholder="Corral Letter (e.g. A)"
                 value={corral}
                 onChange={(e) => setCorral(e.target.value)} // Update local state as user types
             />

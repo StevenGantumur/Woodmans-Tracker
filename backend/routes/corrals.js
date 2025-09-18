@@ -19,6 +19,7 @@ router.get('/', (req, res) => {
   res.json(corralData);
 });
 
+let lastUpdated = null;
 // Starts a post route at /api/corrals/update
 // Extracts corral_id and count
 router.post('/', (req, res) => {
@@ -35,6 +36,7 @@ router.post('/', (req, res) => {
   res.json({
     message: `Corral ${corral_id} updated`,
     currentStatus: corralData,
+    lastUpdated,
   });
 });
 

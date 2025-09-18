@@ -13,6 +13,7 @@ import UpdateForm from "./Components/UpdateForm";
 function App() {
   // Initializes an empty object that will later hold the data of the cart count from the server.
   const [corrals, setCorrals] = useState({});
+  const [lastUpdated, setLastUpdated] = useState(null); // Used because one of the const statements in CorralList.jsx ended up outside function
 
   
   // Fetch from your backend (GET /api/corrals).
@@ -27,18 +28,19 @@ function App() {
   }, []);
 
   // Function to update corrals (will be called updateForm)
-  const updateCorrals = (newData) => {
-    console.log("updateCorrals called with:", newData); // debug
+  const updateCorrals = (newData, updatedID) => {
+    console.log("updateCorrals called with:", newData, "Updated:", updatedID); // debug
     // Replace old data with updated data
     setCorrals(newData);
+    setLastUpdated(updatedID);
   };
- 
+  
   // Rendering the UI
   // Converts the entries into a readable array format.
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Cart Corrals</h1>
-      <CorralList corrals={corrals} />
+      <CorralList corrals={corrals} lastUpdated={lastUpdated} />
       <UpdateForm updateCorrals={updateCorrals} />
     </div>
   );
