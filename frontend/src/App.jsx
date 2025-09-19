@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 // Importing the jsx files
 import CorralList from "./Components/CorralList";
 import UpdateForm from "./Components/UpdateForm";
+import CorralGrid from "./Components/CorralGrid";
 
 // We want to display the cart count from the Express backend to our React frontend. We will connect them here.
 
@@ -42,6 +43,7 @@ function App() {
       <h1>Cart Corrals</h1>
       <CorralList corrals={corrals} lastUpdated={lastUpdated} />
       <UpdateForm updateCorrals={updateCorrals} />
+      <CorralGrid corrals={corrals} />
     </div>
   );
 }
