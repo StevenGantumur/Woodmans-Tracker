@@ -1,0 +1,30 @@
+/* Container for the grid, 3 rows x 8 columns */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr); /* columns */
+    grid-template-rows: repeat(3, 100px); /* 3 rows, height 80 px each */
+    gap: 10px; /* spacing between cells */
+    padding: 20px;
+}
+
+/* Each corral cell box */
+.grid-item {
+    display: flex;
+    flex-direction: column; /* stack ID on top of count */
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #333;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #000;
+    transition: all 0.3s ease; /* smooth color change */
+}
+
+.corral-id {
+    margin-bottom: 5px;
+}
+
+.corral-count {
+    font-size: 18px
+}
