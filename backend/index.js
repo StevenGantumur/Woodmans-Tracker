@@ -26,19 +26,27 @@ app.get('/', (req, res) => {
   res.send('Backend is working!');
 });
 
+// Health check endpoint - Claude claims that it is good for production purposes. Monitoring tools can ping this to verify the server is responsive.
 app.get('/health', (req, res) => {
   res.json({
+    // Status Field
     status: 'healthy',
+    //Service Name
     service: 'cart-corral-backend',
+    // When health checkup of server occurs
     timestamp: new Date().toISOString()
   });
-
-  
-}
+});
 
 app.listen(PORT, () => {
     //log sends it to the terminal
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
+
+  console.log(`Endpoints available:`)
+  console.log(`GET /api/corrals - Get all corral counts`)
+  console.log(`POST /api/corrals - Update a corral`)
+  console.log(`POST /api/optimize-route - Get optimized collection route`)
+  console.log(`GET /api/shifts - Shift management (TBD WIP)`)
 });
 
 

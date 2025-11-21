@@ -1,7 +1,7 @@
 import sys
 import json
 import math
-from ortools.constraint_solver import pywrapcp, routing_enumb_pb2
+from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 # Helper Functions vvv
 
@@ -62,10 +62,10 @@ def optimize_cart_route(locations, start_index = 0):
     # Set search parameters
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
-        routing_enumb_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     )
     search_parameters.local_search_metaheuristic = (
-        routing_enumb_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
     )
     search_parameters.time_limit.seconds = 5
     
