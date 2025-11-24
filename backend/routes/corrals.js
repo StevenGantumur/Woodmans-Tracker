@@ -29,12 +29,14 @@ router.post('/', (req, res) => {
   if (!corral_id || count === undefined) {
     return res.status(400).send('Missing data');
   }
+  const normalizedId = String(corral_id).trim().toUpperCase();
   // Updates count
-  corralData[corral_id] = count;
+  corralData[normalizedId] = count;
+  lastUpdated = new Date().toISOString();
   
   // Sends back confirmation in JSON and shows a new message showing new cart count
   res.json({
-    message: `Corral ${corral_id} updated`,
+    message: `Corral ${normalizedId} updated`,
     currentStatus: corralData,
     lastUpdated,
   });

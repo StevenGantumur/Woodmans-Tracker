@@ -9,6 +9,8 @@ import CorralList from "./Components/CorralList";
 import UpdateForm from "./Components/UpdateForm";
 import CorralGrid from "./Components/CorralGrid";
 
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 // We want to display the cart count from the Express backend to our React frontend. We will connect them here.
 
 function App() {
@@ -16,12 +18,18 @@ function App() {
   const [corrals, setCorrals] = useState({});
   const [lastUpdated, setLastUpdated] = useState(null); // Used because one of the const statements in CorralList.jsx ended up outside function
   const [optimizedRoute, setOptimizedRoute] = useState([]); // Holds optimized route data from backend ML stub
+  const [routeLoading, setRouteLoading] = useState(false);
   
   // Fetch from your backend (GET /api/corrals).
   useEffect(() => {
-    fetch('http://localhost:3001/api/corrals')
+    fetch(`${API_BASE}/api/corrals`)
       // Then Parses the JSON.
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch corrals: ${res.status}`);
+        }
+        return res.json();
+      })
       // Update the corrals state.
       .then(data => setCorrals(data))
       // Only run once, when the page loads (because of the empty []).
@@ -38,8 +46,10 @@ function App() {
 
   // Function to fetch optimized route from backend ML stub (TEMPORARY, WILL ADD ML LATER)
   const getOptimizedRoute = async () => {
+    if (routeLoading) return; // prevent spam clicks
+    setRouteLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/api/optimize-route', {
+      const res = await fetch(`${API_BASE}/api/optimize-route`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ corrals }) // Send current corrals state
@@ -55,6 +65,10 @@ function App() {
     }
     catch(err) {
       console.error("Error fetching optimized route: ", err);
+      setOptimizedRoute([]);
+    }
+    finally {
+      setRouteLoading(false);
     }
   };
   
@@ -65,12 +79,12 @@ function App() {
     <div style={{ padding: '2rem' }}>
       <h1>Cart Corrals</h1>
       <CorralList corrals={corrals} lastUpdated={lastUpdated} />
-      <UpdateForm updateCorrals={updateCorrals} />
+      <UpdateForm updateCorrals={updateCorrals} apiBase={API_BASE} />
       <CorralGrid corrals={corrals} />
 
       {/* Button that calls backend to get optimized route */}
-      <button onClick={getOptimizedRoute} style={{ marginTop: "1rem" }}>
-        Get Optimized Route
+      <button onClick={getOptimizedRoute} style={{ marginTop: "1rem" }} disabled={routeLoading}>
+        {routeLoading ? "Optimizing..." : "Get Optimized Route"}
       </button>
 
       {/* Only render route if optimizedRoute is a valid array with items */}

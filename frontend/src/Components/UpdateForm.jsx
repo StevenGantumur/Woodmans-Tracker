@@ -5,7 +5,7 @@ import { useState } from "react";
 
 
 // Declares new function named UpdateForm
-function UpdateForm({ updateCorrals }) {
+function UpdateForm({ updateCorrals, apiBase = '' }) {
     // Sets up pieces of state called corral and count. Starting as empty string, ''.
     // Name is setCorral and setCount
         // setCorral is the function to update value of Corral, setCount is the count.
@@ -19,7 +19,7 @@ function UpdateForm({ updateCorrals }) {
         
         try {
             // send a POST request to backend API
-            const res = await fetch('http://localhost:3001/api/corrals', {
+            const res = await fetch(`${apiBase}/api/corrals`, {
                 method: 'POST', // Tells server this is a POST request
                 headers: {
                     'Content-Type': 'application/json', // Sending JSON data
