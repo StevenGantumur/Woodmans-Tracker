@@ -18,6 +18,7 @@ function App() {
   const [corrals, setCorrals] = useState({});
   const [lastUpdated, setLastUpdated] = useState(null); // Used because one of the const statements in CorralList.jsx ended up outside function
   const [optimizedRoute, setOptimizedRoute] = useState([]); // Holds optimized route data from backend ML stub
+  const [routeMeta, setRouteMeta] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   
   // Fetch from your backend (GET /api/corrals).
@@ -62,10 +63,16 @@ function App() {
 
       // Make sure it's always an array, fallback to empty if missing
       setOptimizedRoute(Array.isArray(data.optimizedRoute) ? data.optimizedRoute : []);
+      setRouteMeta({
+        method: data.method,
+        note: data.note,
+        message: data.message
+      });
     }
     catch(err) {
       console.error("Error fetching optimized route: ", err);
       setOptimizedRoute([]);
+      setRouteMeta(null);
     }
     finally {
       setRouteLoading(false);
@@ -92,6 +99,9 @@ function App() {
         <div style={{ marginTop: "1rem" }}>
           <h3>Optimized Route:</h3>
           <p>{optimizedRoute.join(" ➝ ")}</p>
+          {routeMeta?.method && <p style={{ fontSize: '0.9rem', color: '#555' }}>Method: {routeMeta.method}</p>}
+          {routeMeta?.note && <p style={{ fontSize: '0.9rem', color: '#555' }}>{routeMeta.note}</p>}
+          {routeMeta?.message && <p style={{ fontSize: '0.9rem', color: '#555' }}>{routeMeta.message}</p>}
         </div>
       )}
     </div>

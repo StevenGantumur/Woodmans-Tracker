@@ -3,11 +3,7 @@
 // Import useState from React so we can track user input values (corral + count)
 import { useState } from "react";
 
-const ALLOWED_CORRALS = [
-    'A','B','C','D','E','F','G','H',
-    'I','J','K','L','M','N','O','P',
-    'Q','R','S','T','U','V','W','X'
-];
+import ALLOWED_CORRALS from '../../../shared/corrals.json';
 
 // Declares new function named UpdateForm
 function UpdateForm({ updateCorrals, apiBase = '' }) {
@@ -36,6 +32,10 @@ function UpdateForm({ updateCorrals, apiBase = '' }) {
         }
         if(Number.isNaN(parsedCount) || !Number.isFinite(parsedCount)) {
             setError('Count must be a number');
+            return;
+        }
+        if(!Number.isInteger(parsedCount) || parsedCount < 0) {
+            setError('Count must be a non-negative integer');
             return;
         }
         setError('');

@@ -5,11 +5,7 @@ const express = require('express');
 //Creates the router, a mini version of my server.
 const router = express.Router();
 
-const ALLOWED_CORRALS = [
-  'A','B','C','D','E','F','G','H',
-  'I','J','K','L','M','N','O','P',
-  'Q','R','S','T','U','V','W','X'
-];
+const ALLOWED_CORRALS = require('../../shared/corrals.json');
 
 //Mock data, usually gonna be replaced later by my RFID sensor on the carts in the corrals.
 let corralData = {
@@ -46,6 +42,9 @@ router.post('/', (req, res) => {
   }
   if (!ALLOWED_CORRALS.includes(normalizedId)) {
     return res.status(400).send('Unknown corral ID');
+  }
+  if (!Number.isInteger(parsedCount) || parsedCount < 0) {
+    return res.status(400).send('Count must be a non-negative integer');
   }
 
   // Updates count
