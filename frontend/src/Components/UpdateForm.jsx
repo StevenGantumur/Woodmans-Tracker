@@ -3,6 +3,11 @@
 // Import useState from React so we can track user input values (corral + count)
 import { useState } from "react";
 
+const ALLOWED_CORRALS = [
+    'A','B','C','D','E','F','G','H',
+    'I','J','K','L','M','N','O','P',
+    'Q','R','S','T','U','V','W','X'
+];
 
 // Declares new function named UpdateForm
 function UpdateForm({ updateCorrals, apiBase = '' }) {
@@ -11,11 +16,29 @@ function UpdateForm({ updateCorrals, apiBase = '' }) {
         // setCorral is the function to update value of Corral, setCount is the count.
     const [corral, setCorral] = useState('');
     const [count, setCount] = useState('');
+    const [error, setError] = useState('');
 
     // Called when form is submitted
     const handleSubmit = async (e) => {
         // Prevents reloading the page (default form behavior)
         e.preventDefault();
+
+        const normalizedId = corral.trim().toUpperCase();
+        const parsedCount = Number(count);
+
+        if(!normalizedId) {
+            setError('Corral is required');
+            return;
+        }
+        if(!ALLOWED_CORRALS.includes(normalizedId)) {
+            setError(`Unknown corral. Use one of: ${ALLOWED_CORRALS.join(', ')}`);
+            return;
+        }
+        if(Number.isNaN(parsedCount) || !Number.isFinite(parsedCount)) {
+            setError('Count must be a number');
+            return;
+        }
+        setError('');
         
         try {
             // send a POST request to backend API
@@ -26,8 +49,8 @@ function UpdateForm({ updateCorrals, apiBase = '' }) {
                 },
                 // Turn JS object into a JSON string for sending
                 body: JSON.stringify({
-                    corral_id: corral,  // User entered corral ID
-                    count: parseInt(count, 10), // User entered count (NOTE: This will be replaced by a real time update through RFID sensors in corrals)
+                    corral_id: normalizedId,  // User entered corral ID
+                    count: parsedCount, // User entered count (NOTE: This will be replaced by a real time update through RFID sensors in corrals)
                 }),
             });
             
@@ -42,7 +65,7 @@ function UpdateForm({ updateCorrals, apiBase = '' }) {
             console.log("POST response:", data); // Debug: see what backend sent back
 
             // Call the function from App.jsx to update corrals state
-            updateCorrals(data.currentStatus, corral);
+            updateCorrals(data.currentStatus, data.normalizedId || normalizedId);
 
             // Reset form fields back to empty strings
             setCorral('');
@@ -70,6 +93,7 @@ function UpdateForm({ updateCorrals, apiBase = '' }) {
             onChange={(e) => setCount(e.target.value)}
             />
             <button type="submit">Update Corral</button>
+            {error && <div style={{ color: 'red', marginTop: '0.5rem' }}>{error}</div>}
         </form>
     )
 }

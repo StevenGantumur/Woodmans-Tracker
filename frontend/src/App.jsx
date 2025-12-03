@@ -9,7 +9,7 @@ import CorralList from "./Components/CorralList";
 import UpdateForm from "./Components/UpdateForm";
 import CorralGrid from "./Components/CorralGrid";
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001';
 
 // We want to display the cart count from the Express backend to our React frontend. We will connect them here.
 
