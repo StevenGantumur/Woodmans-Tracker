@@ -5,6 +5,8 @@ const express = require('express');
 //Creates the router, a mini version of my server.
 const router = express.Router();
 
+const ALLOWED_CORRALS = require('../../shared/corrals.json');
+
 //Mock data, usually gonna be replaced later by my RFID sensor on the carts in the corrals.
 let corralData = {
   A: 5,
@@ -26,15 +28,33 @@ router.post('/', (req, res) => {
   const { corral_id, count } = req.body;
 
   //Invalid input
-  if (!corral_id || count === undefined) {
+  if (corral_id === undefined || corral_id === null || count === undefined || count === null) {
     return res.status(400).send('Missing data');
   }
+  const normalizedId = String(corral_id).trim().toUpperCase();
+  const parsedCount = Number(count);
+
+  if (!normalizedId) {
+    return res.status(400).send('Corral ID required');
+  }
+  if (Number.isNaN(parsedCount) || !Number.isFinite(parsedCount)) {
+    return res.status(400).send('Count must be a number');
+  }
+  if (!ALLOWED_CORRALS.includes(normalizedId)) {
+    return res.status(400).send('Unknown corral ID');
+  }
+  if (!Number.isInteger(parsedCount) || parsedCount < 0) {
+    return res.status(400).send('Count must be a non-negative integer');
+  }
+
   // Updates count
-  corralData[corral_id] = count;
+  corralData[normalizedId] = parsedCount;
+  lastUpdated = new Date().toISOString();
   
   // Sends back confirmation in JSON and shows a new message showing new cart count
   res.json({
-    message: `Corral ${corral_id} updated`,
+    message: `Corral ${normalizedId} updated`,
+    normalizedId,
     currentStatus: corralData,
     lastUpdated,
   });
