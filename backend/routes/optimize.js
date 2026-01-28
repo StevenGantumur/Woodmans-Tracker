@@ -31,7 +31,7 @@ function callPythonOptimizer(corralData) {
     // Returns a promise that resolves with Python's result
     return new Promise((resolve, reject) => {
         // Path to python script
-        const scriptPath = path.join(__dirname, "..", "scripts", "optimizer.py");
+        const scriptPath = path.join(__dirname, "..", "..", "optimizer", "optimizer.py");
 
         // Spawn the python process
         const python = spawn('python3', [scriptPath]);

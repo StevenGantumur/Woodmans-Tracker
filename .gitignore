@@ -18,3 +18,15 @@ backend/dist
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+*.log
+
+# Python
+ml/venv/
+__pycache__/
+*.pyc
+
+# ML models
+ml/models/*.pkl
+ml/models/*.json
+
+
