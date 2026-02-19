@@ -30,3 +30,6 @@ ml/models/*.pkl
 ml/models/*.json
 
 
+backend/node_modules/
+frontend/node_modules/
+node_modules/
