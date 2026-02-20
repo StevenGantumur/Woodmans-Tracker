@@ -202,7 +202,7 @@ if __name__ == "__main__":
             
         # Predict full day for Corral A on Saturday
         print("\nSaturday predictions for Corral A:")
-        day_predictions = predictor.predict_day('A', day_of_week=5)
+        day_predictions = predictor.predictDay('A', day_of_week=5)
         for p in day_predictions[8:20]:  # Show 8am-8pm
             print(f"  {p['hour']:02d}:00 > {p['predicted_count']} carts")
             
