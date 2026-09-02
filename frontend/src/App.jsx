@@ -12,6 +12,8 @@ const JOB = {
   restock: { label: "Restock the storefront", tone: "text-signal-stop" },
   collection: { label: "Collection sweep", tone: "text-signal-watch" },
   idle: { label: "Nothing urgent", tone: "text-signal-go" },
+  delivery: { label: "Delivery run", tone: "text-signal-route" },
+  full: { label: "Bay already full", tone: "text-signal-go" },
 };
 
 function App() {
@@ -24,6 +26,7 @@ function App() {
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState(null);
   const [simulating, setSimulating] = useState(false);
+  const [depot, setDepot] = useState(null); // null = let the API choose the job
 
   const [view, setView] = useState("dashboard");
 
@@ -95,9 +98,11 @@ function App() {
     setRouteLoading(true);
     setRouteError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/optimize-route`);
-      if (!res.ok) throw new Error(`Server responded ${res.status}`);
-      setRoute(await res.json());
+      const qs = depot ? `?depot=${encodeURIComponent(depot)}` : "";
+      const res = await fetch(`${API_BASE}/api/optimize-route${qs}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Server responded ${res.status}`);
+      setRoute(data);
     } catch (err) {
       setRoute(null);
       setRouteError(`Could not plan a route. ${err.message}`);
@@ -196,6 +201,22 @@ function App() {
               <div className="space-y-5">
                 <section className="panel p-5">
                   <h2 className="label mb-3">Next job</h2>
+                  {/* Auto lets the API decide the job; naming a bay forces a
+                      delivery run to it. */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <BayButton active={depot === null} onClick={() => setDepot(null)} label="Auto" />
+                    {lot.corrals
+                      .filter((c) => c.type === "supply")
+                      .map((c) => (
+                        <BayButton
+                          key={c.id}
+                          active={depot === c.id}
+                          onClick={() => setDepot(c.id)}
+                          label={c.label || c.id}
+                        />
+                      ))}
+                  </div>
+
                   <div className="flex gap-2">
                     <button
                       onClick={planRoute}
@@ -255,6 +276,19 @@ function App() {
         )}
       </main>
     </div>
+  );
+}
+
+function BayButton({ active, onClick, label }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`cut-sm px-2.5 py-1 text-xs font-medium transition ${
+        active ? "bg-ink-600 text-haze-100" : "bg-ink-700 text-haze-500 hover:text-haze-100"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 

@@ -145,7 +145,7 @@ Frontend on `http://localhost:5173`, API on `http://localhost:3001`.
 | GET | `/api/corrals/:id/history` | - | Recent snapshots for one corral |
 | GET | `/api/building` | - | Carts inside the store |
 | POST | `/api/building` | token | Update the building count |
-| GET | `/api/optimize-route` | - | Next job and its route |
+| GET | `/api/optimize-route` | - | Next job and its route (`?depot=` to pick a bay) |
 | GET | `/api/optimize-route/preview` | - | Current optimizer configuration |
 | GET | `/api/analytics` | - | Aggregated history over N days |
 | GET | `/api/weather` | - | Current conditions and cart impact |
@@ -183,6 +183,15 @@ thorough.
 
 Otherwise it plans a collection sweep across every lot corral above the threshold,
 ending at whichever storefront corral is closest to the work.
+
+A worker who already knows where they want to drop off can override that with
+`?depot=X`, `?depot=V`, or `?depot=W`, which plans a delivery run to that bay
+from the nearest stocked corrals regardless of what the automatic rule would have
+picked. The UI exposes it as Auto / Store Lot 1 / Cart Tunnel / Store Lot 2.
+
+Restock thresholds are per corral rather than one global fraction, because a 400
+cart reservoir and a 100 cart bay at the door do not become urgent at the same
+percentage. They are declared as `lowWater` in the layout file.
 
 Either way the chosen stops go to `optimizer/optimizer.py`, which builds a Euclidean
 distance matrix and hands it to OR-Tools using `PATH_CHEAPEST_ARC` for a first

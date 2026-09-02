@@ -184,25 +184,28 @@
       "y": -50,
       "capacity": 400,
       "label": "Cart Tunnel",
-      "width": 150
+      "width": 150,
+      "lowWater": 100
     },
     {
       "id": "W",
       "type": "supply",
       "x": 520,
       "y": -50,
-      "capacity": 40,
+      "capacity": 100,
       "label": "Store Lot 2",
-      "width": 80
+      "width": 80,
+      "lowWater": 40
     },
     {
       "id": "X",
       "type": "supply",
       "x": 260,
       "y": -50,
-      "capacity": 40,
+      "capacity": 100,
       "label": "Store Lot 1",
-      "width": 80
+      "width": 80,
+      "lowWater": 40
     }
   ],
   "inactive": [],

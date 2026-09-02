@@ -4,9 +4,18 @@ const { spawn } = require('child_process');
 
 const router = express.Router();
 const { pool } = require('../db');
+const layout = require('../../shared/layout.json');
+
+// Per-corral restock thresholds. A big reservoir and a small door-side bay do
+// not become urgent at the same fraction of capacity, so the layout file names
+// the threshold explicitly and the global fraction is only a fallback.
+const LOW_WATER = Object.fromEntries(
+  layout.corrals.filter((c) => c.lowWater != null).map((c) => [c.id, c.lowWater])
+);
 
 // A worker can push roughly this many carts in one line.
-const WORKER_CAPACITY = Number(process.env.WORKER_CAPACITY) || 30;
+// A powered cart mover, not a person pushing a line by hand.
+const WORKER_CAPACITY = Number(process.env.WORKER_CAPACITY) || 60;
 // Return corrals below this aren't worth the walk.
 const MIN_CART_THRESHOLD = Number(process.env.MIN_CART_THRESHOLD) || 5;
 // A supply corral under this fraction of capacity is treated as urgent: an empty
@@ -70,10 +79,27 @@ async function loadLot() {
 // Restocking wins whenever a storefront corral drops below the low-water mark,
 // because a shopper who cannot find a cart is a problem right now, while a full
 // return corral only costs a longer trip later.
-function chooseJob(returns, supplies) {
+function chooseJob(returns, supplies, requestedDepot) {
+  if (requestedDepot) {
+    const target = supplies.find((s) => s.id === requestedDepot);
+    if (!target) return { job: 'invalid', reason: `${requestedDepot} is not a drop-off bay` };
+
+    const room = (target.capacity ?? Infinity) - target.cart_count;
+    if (room <= 0) {
+      return { job: 'full', target, reason: `${target.id} is already full at ${target.cart_count}` };
+    }
+    return {
+      job: 'delivery',
+      target,
+      reason: `Delivering to ${target.id}, ${room} carts of room`,
+    };
+  }
+
+  const threshold = (s) => LOW_WATER[s.id] ?? (s.capacity || 0) * SUPPLY_LOW_WATER;
+
   const needy = supplies
-    .filter((s) => s.cart_count < (s.capacity || 0) * SUPPLY_LOW_WATER)
-    .sort((a, b) => a.cart_count / (a.capacity || 1) - b.cart_count / (b.capacity || 1));
+    .filter((s) => s.cart_count < threshold(s))
+    .sort((a, b) => a.cart_count / threshold(a) - b.cart_count / threshold(b));
 
   if (needy.length > 0) {
     const target = needy[0];
@@ -139,8 +165,28 @@ function greedyFallback(stops, depot, jobInfo, reason) {
 
 router.get('/', async (req, res) => {
   try {
+    const requestedDepot = req.query.depot ? String(req.query.depot).trim().toUpperCase() : null;
     const { returns, supplies } = await loadLot();
-    const jobInfo = chooseJob(returns, supplies);
+    const jobInfo = chooseJob(returns, supplies, requestedDepot);
+
+    if (jobInfo.job === 'invalid') {
+      return res.status(400).json({
+        error: jobInfo.reason,
+        validDepots: supplies.map((s) => s.id),
+      });
+    }
+
+    if (jobInfo.job === 'full') {
+      return res.json({
+        success: true,
+        job: 'full',
+        reason: jobInfo.reason,
+        optimizedRoute: [],
+        totalDistance: 0,
+        corralsCovered: 0,
+        method: 'none-required',
+      });
+    }
 
     if (jobInfo.job === 'idle') {
       return res.json({
@@ -158,7 +204,7 @@ router.get('/', async (req, res) => {
     let depot;
     let cartsMoved = null;
 
-    if (jobInfo.job === 'restock') {
+    if (jobInfo.job === 'restock' || jobInfo.job === 'delivery') {
       depot = jobInfo.target;
       const picked = pickRestockStops(returns, depot);
       stops = picked.stops;
@@ -167,8 +213,8 @@ router.get('/', async (req, res) => {
       if (stops.length === 0) {
         return res.json({
           success: true,
-          job: 'restock',
-          reason: `${jobInfo.reason}, but no lot corral has enough carts to bring over`,
+          job: jobInfo.job,
+          reason: `${jobInfo.reason}, but no lot corral has carts to bring over`,
           optimizedRoute: [],
           totalDistance: 0,
           corralsCovered: 0,

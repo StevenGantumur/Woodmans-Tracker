@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
 
     const bayCounts = bays.map((c) => ({
       id: c.id,
-      count: randInt(Math.floor((c.capacity ?? 40) * 0.2), c.capacity ?? 40),
+      count: randInt(Math.round((c.capacity ?? 40) * 0.25), Math.round((c.capacity ?? 40) * 0.8)),
     }));
 
     // Carts with shoppers or parked inside. Reserved before the tunnel is filled
