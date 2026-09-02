@@ -9,8 +9,10 @@ const PORT = Number(process.env.PORT) || 3001;
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/shifts', require('./routes/shifts'));
 app.use('/api/corrals', require('./routes/corrals'));
+app.use('/api/building', require('./routes/building'));
 app.use('/api/optimize-route', require('./routes/optimize'));
 
 app.get('/', (req, res) => {
@@ -47,10 +49,13 @@ async function start() {
   const server = app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log('  GET  /health                    Liveness + database check');
-    console.log('  GET  /api/corrals               Current cart counts');
-    console.log('  POST /api/corrals               Update one corral');
+    console.log('  POST /api/auth/login            Get a token');
+    console.log('  GET  /api/corrals               Lot state + building count');
+    console.log('  POST /api/corrals               Update one corral (auth)');
     console.log('  GET  /api/corrals/:id/history   Recent snapshots');
-    console.log('  POST /api/optimize-route        Optimized collection route');
+    console.log('  GET  /api/building              Carts inside the store');
+    console.log('  POST /api/building              Update building count (auth)');
+    console.log('  GET  /api/optimize-route        Next job + route');
     console.log('  GET  /api/shifts                Worker shifts (stub)');
   });
 

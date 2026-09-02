@@ -1,22 +1,11 @@
 import { useState } from "react";
-import ALLOWED_CORRALS from "../../../shared/corrals.json";
 
-function UpdateForm({ onUpdate, apiBase = "" }) {
+function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired }) {
   const [corral, setCorral] = useState("");
   const [count, setCount] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  // Mirrors the server's rules so obvious mistakes are caught without a round trip.
-  // The server revalidates regardless — client checks are for feedback, not enforcement.
-  const validate = (id, parsedCount) => {
-    if (!id) return "Corral is required";
-    if (!ALLOWED_CORRALS.includes(id)) return `Unknown corral. Use A through ${ALLOWED_CORRALS.at(-1)}.`;
-    if (count === "" || Number.isNaN(parsedCount)) return "Count must be a number";
-    if (!Number.isInteger(parsedCount) || parsedCount < 0) return "Count must be a non-negative integer";
-    return null;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,24 +15,30 @@ function UpdateForm({ onUpdate, apiBase = "" }) {
     const id = corral.trim().toUpperCase();
     const parsedCount = Number(count);
 
-    const validationError = validate(id, parsedCount);
-    if (validationError) return setError(validationError);
+    if (!id) return setError("Pick a corral");
+    if (count === "" || !Number.isInteger(parsedCount) || parsedCount < 0) {
+      return setError("Count must be a non-negative integer");
+    }
 
     setSubmitting(true);
     try {
       const res = await fetch(`${apiBase}/api/corrals`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ corral_id: id, count: parsedCount }),
       });
 
       const data = await res.json().catch(() => ({}));
 
-      // Previously this only logged to the console, so a failed save looked
-      // identical to a successful one from the user's side.
+      // An expired shift token should send the worker back to the login form
+      // rather than showing a generic failure they cannot act on.
+      if (res.status === 401) {
+        onAuthExpired?.();
+        throw new Error(data.error || "Session expired");
+      }
       if (!res.ok) throw new Error(data.error || `Server responded ${res.status}`);
 
-      onUpdate(data.currentStatus, data.normalizedId || id);
+      onUpdate(data);
       setSuccess(`Corral ${id} set to ${parsedCount} ${parsedCount === 1 ? "cart" : "carts"}`);
       setCorral("");
       setCount("");
@@ -57,14 +52,19 @@ function UpdateForm({ onUpdate, apiBase = "" }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Corral (e.g. A)"
+        <select
           value={corral}
           onChange={(e) => setCorral(e.target.value)}
-          aria-label="Corral letter"
+          aria-label="Corral"
           className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        >
+          <option value="">Select a corral…</option>
+          {corrals.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.id} · {c.type === "supply" ? "storefront" : "lot"}
+            </option>
+          ))}
+        </select>
         <input
           type="number"
           min="0"
@@ -78,9 +78,9 @@ function UpdateForm({ onUpdate, apiBase = "" }) {
           type="submit"
           disabled={submitting}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-            disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+            disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {submitting ? "Saving…" : "Update Corral"}
+          {submitting ? "Saving…" : "Update"}
         </button>
       </div>
 

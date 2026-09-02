@@ -5,13 +5,18 @@ const { spawn } = require('child_process');
 const router = express.Router();
 const { pool } = require('../db');
 
-const DEPOT_CORRAL = process.env.DEPOT_CORRAL || 'A';
+// A worker can push roughly this many carts in one line.
+const WORKER_CAPACITY = Number(process.env.WORKER_CAPACITY) || 30;
+// Return corrals below this aren't worth the walk.
 const MIN_CART_THRESHOLD = Number(process.env.MIN_CART_THRESHOLD) || 5;
+// A supply corral under this fraction of capacity is treated as urgent: an empty
+// corral at the entrance blocks shoppers immediately, so it outranks a full lot.
+const SUPPLY_LOW_WATER = Number(process.env.SUPPLY_LOW_WATER) || 0.4;
 const OPTIMIZER_TIMEOUT_MS = 15000;
 
-// Windows ships `python`; macOS/Linux generally only expose `python3`.
-// Hardcoding either one makes the optimizer fail silently on the other platform.
 const PYTHON_BIN = process.env.PYTHON_BIN || (process.platform === 'win32' ? 'python' : 'python3');
+
+const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 function callPythonOptimizer(payload) {
   return new Promise((resolve, reject) => {
@@ -21,7 +26,6 @@ function callPythonOptimizer(payload) {
     let stdout = '';
     let stderr = '';
 
-    // A hung solver would otherwise hold the request open forever.
     const timer = setTimeout(() => {
       python.kill();
       reject(new Error(`Optimizer timed out after ${OPTIMIZER_TIMEOUT_MS}ms`));
@@ -37,9 +41,7 @@ function callPythonOptimizer(payload) {
 
     python.on('close', (code) => {
       clearTimeout(timer);
-      if (code !== 0) {
-        return reject(new Error(`Optimizer exited ${code}: ${stderr.trim()}`));
-      }
+      if (code !== 0) return reject(new Error(`Optimizer exited ${code}: ${stderr.trim()}`));
       try {
         resolve(JSON.parse(stdout));
       } catch {
@@ -52,97 +54,177 @@ function callPythonOptimizer(payload) {
   });
 }
 
-// Greedy fallback: visit the fullest corrals first. Ignores travel distance,
-// so it is strictly worse than the TSP solve and says so in its response.
-function greedyFallback(corrals, reason) {
-  // The depot is excluded here because it is added back as the first and last
-  // stop below; leaving it in would list it twice.
-  const route = Object.entries(corrals)
-    .filter(([id, count]) => id !== DEPOT_CORRAL && count >= MIN_CART_THRESHOLD)
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => id);
-
+async function loadLot() {
+  const { rows } = await pool.query(
+    `SELECT id, x_coord AS x, y_coord AS y, cart_count, type, capacity
+       FROM corrals WHERE status = 'active'`
+  );
   return {
-    success: true,
-    optimizedRoute: route.length ? [DEPOT_CORRAL, ...route, DEPOT_CORRAL] : [],
-    totalDistance: null,
-    method: 'greedy-fallback',
-    corralsCovered: route.length,
-    degraded: true,
-    note: `Route optimizer unavailable, sorted by cart count instead. (${reason})`,
+    returns: rows.filter((r) => r.type === 'return'),
+    supplies: rows.filter((r) => r.type === 'supply'),
   };
 }
 
-router.post('/', async (req, res) => {
-  const { corrals } = req.body;
+// Decides what the worker should do next.
+//
+// Restocking wins whenever a storefront corral drops below the low-water mark,
+// because a shopper who cannot find a cart is a problem right now, while a full
+// return corral only costs a longer trip later.
+function chooseJob(returns, supplies) {
+  const needy = supplies
+    .filter((s) => s.cart_count < (s.capacity || 0) * SUPPLY_LOW_WATER)
+    .sort((a, b) => a.cart_count / (a.capacity || 1) - b.cart_count / (b.capacity || 1));
 
-  if (!corrals || typeof corrals !== 'object' || Array.isArray(corrals)) {
-    return res.status(400).json({ error: 'Missing or invalid corral data' });
+  if (needy.length > 0) {
+    const target = needy[0];
+    return {
+      job: 'restock',
+      target,
+      reason: `${target.id} is at ${target.cart_count}/${target.capacity} carts`,
+    };
   }
 
-  const needsCollection = Object.entries(corrals).filter(
-    ([, count]) => Number(count) >= MIN_CART_THRESHOLD
-  );
-
-  if (needsCollection.length === 0) {
-    return res.json({
-      success: true,
-      optimizedRoute: [],
-      totalDistance: 0,
-      corralsCovered: 0,
-      method: 'none-required',
-      message: `No corrals have ${MIN_CART_THRESHOLD} or more carts`,
-    });
+  const collectable = returns.filter((r) => r.cart_count >= MIN_CART_THRESHOLD);
+  if (collectable.length > 0) {
+    const total = collectable.reduce((sum, r) => sum + r.cart_count, 0);
+    return {
+      job: 'collection',
+      reason: `${total} carts waiting across ${collectable.length} corrals`,
+    };
   }
 
+  return { job: 'idle', reason: 'Storefront corrals are stocked and no lot corral needs clearing' };
+}
+
+// Nearest return corrals with carts, taken until the worker is loaded.
+// Sorting by distance rather than by size is the point of a restock run: the
+// fastest way to refill the entrance beats the most thorough sweep.
+function pickRestockStops(returns, target) {
+  const stops = [];
+  let carts = 0;
+
+  const byDistance = returns
+    .filter((r) => r.cart_count >= MIN_CART_THRESHOLD)
+    .map((r) => ({ ...r, dist: distance(r, target) }))
+    .sort((a, b) => a.dist - b.dist);
+
+  const needed = Math.min(WORKER_CAPACITY, (target.capacity || WORKER_CAPACITY) - target.cart_count);
+
+  for (const corral of byDistance) {
+    if (carts >= needed) break;
+    stops.push(corral);
+    carts += corral.cart_count;
+  }
+  return { stops, carts };
+}
+
+function greedyFallback(stops, depot, jobInfo, reason) {
+  const route = stops
+    .filter((s) => s.id !== depot.id)
+    .sort((a, b) => b.cart_count - a.cart_count)
+    .map((s) => s.id);
+
+  return {
+    success: true,
+    job: jobInfo.job,
+    reason: jobInfo.reason,
+    optimizedRoute: route.length ? [depot.id, ...route, depot.id] : [],
+    totalDistance: null,
+    corralsCovered: route.length,
+    method: 'greedy-fallback',
+    degraded: true,
+    note: `Route optimizer unavailable, ordered by cart count instead. (${reason})`,
+  };
+}
+
+router.get('/', async (req, res) => {
   try {
-    // Coordinates come from the corrals table, the same source the migrations seed.
-    // They were previously duplicated in this file, which meant moving a corral
-    // required editing two places that could silently disagree.
-    const { rows } = await pool.query(
-      `SELECT id, x_coord, y_coord FROM corrals WHERE id = ANY($1::varchar[])`,
-      [[...needsCollection.map(([id]) => id), DEPOT_CORRAL]]
-    );
+    const { returns, supplies } = await loadLot();
+    const jobInfo = chooseJob(returns, supplies);
 
-    const coords = Object.fromEntries(rows.map((r) => [r.id, { x: r.x_coord, y: r.y_coord }]));
-
-    if (!coords[DEPOT_CORRAL]) {
-      return res.status(500).json({ error: `Depot corral ${DEPOT_CORRAL} missing from database` });
+    if (jobInfo.job === 'idle') {
+      return res.json({
+        success: true,
+        job: 'idle',
+        reason: jobInfo.reason,
+        optimizedRoute: [],
+        totalDistance: 0,
+        corralsCovered: 0,
+        method: 'none-required',
+      });
     }
 
-    const stops = {};
-    for (const [id, count] of needsCollection) {
-      if (coords[id]) stops[id] = { ...coords[id], count: Number(count) };
-      else console.warn(`No coordinates for corral ${id}, skipping`);
+    let stops;
+    let depot;
+    let cartsMoved = null;
+
+    if (jobInfo.job === 'restock') {
+      depot = jobInfo.target;
+      const picked = pickRestockStops(returns, depot);
+      stops = picked.stops;
+      cartsMoved = picked.carts;
+
+      if (stops.length === 0) {
+        return res.json({
+          success: true,
+          job: 'restock',
+          reason: `${jobInfo.reason}, but no lot corral has enough carts to bring over`,
+          optimizedRoute: [],
+          totalDistance: 0,
+          corralsCovered: 0,
+          method: 'none-available',
+        });
+      }
+    } else {
+      stops = returns.filter((r) => r.cart_count >= MIN_CART_THRESHOLD);
+      cartsMoved = stops.reduce((sum, s) => sum + s.cart_count, 0);
+      // Sweeps end at whichever storefront corral is closest to the work.
+      const centroid = {
+        x: stops.reduce((s, r) => s + r.x, 0) / stops.length,
+        y: stops.reduce((s, r) => s + r.y, 0) / stops.length,
+      };
+      depot = supplies.sort((a, b) => distance(a, centroid) - distance(b, centroid))[0];
     }
 
-    // The route has to start and end somewhere, so the depot is always a node
-    // even when it is below the collection threshold.
-    stops[DEPOT_CORRAL] ??= { ...coords[DEPOT_CORRAL], count: Number(corrals[DEPOT_CORRAL]) || 0 };
+    const nodes = { [depot.id]: { x: depot.x, y: depot.y, count: depot.cart_count } };
+    for (const s of stops) nodes[s.id] = { x: s.x, y: s.y, count: s.cart_count };
 
-    const result = await callPythonOptimizer({ corrals: stops, depot: DEPOT_CORRAL });
-
-    if (!result.success) {
-      return res.json(greedyFallback(corrals, result.error || 'solver found no route'));
+    try {
+      const result = await callPythonOptimizer({ corrals: nodes, depot: depot.id });
+      if (!result.success) {
+        return res.json(greedyFallback(stops, depot, jobInfo, result.error || 'no route found'));
+      }
+      res.json({
+        ...result,
+        job: jobInfo.job,
+        reason: jobInfo.reason,
+        depot: depot.id,
+        cartsMoved,
+        units: 'feet',
+      });
+    } catch (err) {
+      console.error('Optimizer failed:', err.message);
+      res.json(greedyFallback(stops, depot, jobInfo, err.message));
     }
-    res.json(result);
   } catch (err) {
-    console.error('Route optimization failed:', err.message);
-    res.json(greedyFallback(corrals, err.message));
+    console.error('Route planning failed:', err.message);
+    res.status(503).json({ error: 'Database unavailable' });
   }
 });
 
 router.get('/preview', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id FROM corrals ORDER BY id');
+    const { returns, supplies } = await loadLot();
     res.json({
-      message: 'POST corral data to /api/optimize-route',
-      minThreshold: MIN_CART_THRESHOLD,
-      depot: DEPOT_CORRAL,
+      workerCapacity: WORKER_CAPACITY,
+      minCartThreshold: MIN_CART_THRESHOLD,
+      supplyLowWater: SUPPLY_LOW_WATER,
       pythonBin: PYTHON_BIN,
-      availableCorrals: rows.map((r) => r.id),
+      returnCorrals: returns.length,
+      supplyCorrals: supplies.map((s) => ({ id: s.id, count: s.cart_count, capacity: s.capacity })),
+      nextJob: chooseJob(returns, supplies).job,
     });
-  } catch (err) {
+  } catch {
     res.status(503).json({ error: 'Database unavailable' });
   }
 });

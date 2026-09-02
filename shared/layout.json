@@ -1,0 +1,40 @@
+{
+  "_comment": "Store layout in feet. Origin (0,0) is the front-left return corral. +x runs right across the lot, +y runs away from the store. Supply corrals sit in front of the return grid at y=-50. Measurements are from the real Woodman's lot: 130 ft between columns, 50 ft between rows.",
+  "units": "feet",
+  "spacing": { "column": 130, "row": 50 },
+  "storefront": { "y": -50 },
+  "corrals": [
+    { "id": "A", "type": "return", "x": 0,   "y": 0,   "column": 0, "row": 0 },
+    { "id": "B", "type": "return", "x": 0,   "y": 50,  "column": 0, "row": 1 },
+    { "id": "C", "type": "return", "x": 0,   "y": 100, "column": 0, "row": 2 },
+
+    { "id": "D", "type": "return", "x": 130, "y": 0,   "column": 1, "row": 0 },
+    { "id": "E", "type": "return", "x": 130, "y": 50,  "column": 1, "row": 1 },
+    { "id": "F", "type": "return", "x": 130, "y": 100, "column": 1, "row": 2 },
+
+    { "id": "G", "type": "return", "x": 260, "y": 0,   "column": 2, "row": 0 },
+    { "id": "H", "type": "return", "x": 260, "y": 50,  "column": 2, "row": 1 },
+    { "id": "I", "type": "return", "x": 260, "y": 100, "column": 2, "row": 2 },
+
+    { "id": "J", "type": "return", "x": 390, "y": 0,   "column": 3, "row": 0 },
+    { "id": "K", "type": "return", "x": 390, "y": 50,  "column": 3, "row": 1 },
+    { "id": "L", "type": "return", "x": 390, "y": 100, "column": 3, "row": 2 },
+
+    { "id": "M", "type": "return", "x": 520, "y": 0,   "column": 4, "row": 0 },
+    { "id": "N", "type": "return", "x": 520, "y": 50,  "column": 4, "row": 1 },
+    { "id": "O", "type": "return", "x": 520, "y": 100, "column": 4, "row": 2 },
+
+    { "id": "P", "type": "return", "x": 650, "y": 0,   "column": 5, "row": 0 },
+    { "id": "Q", "type": "return", "x": 650, "y": 50,  "column": 5, "row": 1 },
+    { "id": "R", "type": "return", "x": 650, "y": 100, "column": 5, "row": 2 },
+
+    { "id": "S", "type": "return", "x": 780, "y": 0,   "column": 6, "row": 0 },
+    { "id": "T", "type": "return", "x": 780, "y": 50,  "column": 6, "row": 1 },
+    { "id": "U", "type": "return", "x": 780, "y": 100, "column": 6, "row": 2 },
+
+    { "id": "V", "type": "supply", "x": 390, "y": -50, "capacity": 60, "label": "West entrance", "width": 220 },
+    { "id": "W", "type": "supply", "x": 520, "y": -50, "capacity": 40, "label": "East entrance", "width": 90 }
+  ],
+  "inactive": ["X"],
+  "_inactiveNote": "The lot has 23 corrals. X exists in the database from the original 24-letter scheme and is marked inactive rather than deleted, so historical snapshots keep their foreign key."
+}
