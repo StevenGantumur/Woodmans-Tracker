@@ -1,5 +1,9 @@
 import { useState } from "react";
 
+const FIELD =
+  "w-full px-3 py-2 bg-ink-700 border border-ink-600 rounded-lg text-haze-100 " +
+  "placeholder:text-haze-500 focus:outline-none focus:ring-2 focus:ring-signal-route";
+
 function LoginForm({ apiBase, onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +32,7 @@ function LoginForm({ apiBase, onLogin }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 max-w-sm">
-      <p className="text-sm text-gray-600">Log in to update cart counts.</p>
+      <p className="text-sm text-haze-300">Log in to update cart counts.</p>
       <input
         type="text"
         placeholder="Username"
@@ -36,7 +40,7 @@ function LoginForm({ apiBase, onLogin }) {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         aria-label="Username"
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={FIELD}
       />
       <input
         type="password"
@@ -45,17 +49,21 @@ function LoginForm({ apiBase, onLogin }) {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         aria-label="Password"
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={FIELD}
       />
       <button
         type="submit"
         disabled={submitting}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-          disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="px-4 py-2 bg-signal-route text-ink-900 rounded-lg font-semibold
+          hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         {submitting ? "Logging in…" : "Log in"}
       </button>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-signal-stop">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

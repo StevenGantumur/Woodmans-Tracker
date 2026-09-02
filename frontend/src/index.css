@@ -1,3 +1,70 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-haze-100 antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* Faded charcoal: a soft pool of light in the middle falling off to near
+       black at the edges, over a fine brushed texture. Fixed so the glow stays
+       put while the page scrolls under it. */
+    background-color: #0b0b0b;
+    background-image:
+      repeating-linear-gradient(
+        92deg,
+        rgba(255, 255, 255, 0.014) 0px,
+        rgba(255, 255, 255, 0) 2px,
+        rgba(0, 0, 0, 0.02) 3px,
+        rgba(255, 255, 255, 0) 5px
+      ),
+      radial-gradient(
+        ellipse 70% 55% at 50% 42%,
+        #3d3d3d 0%,
+        #303030 22%,
+        #202020 48%,
+        #121212 74%,
+        #0a0a0a 100%
+      );
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Slightly translucent so the background glow reads through the panels
+     instead of flattening them into solid blocks. */
+  .panel {
+    @apply border border-ink-600/70 rounded-xl;
+    background-color: rgb(28 28 28 / 0.72);
+    backdrop-filter: blur(2px);
+  }
+
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-haze-500;
+  }
+}
+
+/* The route draws itself along the walking order so the sequence reads as a
+   path rather than a list of letters. */
+@keyframes route-draw {
+  from {
+    stroke-dashoffset: 4000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.route-line {
+  stroke-dasharray: 4000;
+  animation: route-draw 1.6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

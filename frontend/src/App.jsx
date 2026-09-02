@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 
 import LotMap from "./Components/LotMap";
+import CorralDetail from "./Components/CorralDetail";
 import UpdateForm from "./Components/UpdateForm";
 import LoginForm from "./Components/LoginForm";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+
+const JOB = {
+  restock: { label: "Restock the storefront", tone: "text-signal-stop" },
+  collection: { label: "Collection sweep", tone: "text-signal-watch" },
+  idle: { label: "Nothing urgent", tone: "text-signal-go" },
+};
 
 function App() {
   const [lot, setLot] = useState(null);
@@ -63,7 +70,7 @@ function App() {
     setUser(null);
   };
 
-  const getRoute = async () => {
+  const planRoute = async () => {
     setRouteLoading(true);
     setRouteError(null);
     try {
@@ -78,93 +85,117 @@ function App() {
     }
   };
 
+  const selectedCorral = lot?.corrals.find((c) => c.id === selected);
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Cart Corral Tracker</h1>
-            <p className="text-sm text-gray-600">
-              Live cart counts and collection routing for the Woodman's lot
-            </p>
+    <div className="min-h-screen">
+      <header className="border-b border-ink-600 bg-ink-800/60 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-signal-go animate-pulse" />
+            <div>
+              <h1 className="text-lg font-bold tracking-tight">Cart Corral Tracker</h1>
+              <p className="text-xs text-haze-500">Woodman's Food Market · live lot operations</p>
+            </div>
           </div>
           {user ? (
-            <div className="text-sm text-right">
-              <p className="text-gray-900 font-medium">{user.username}</p>
-              <button onClick={handleLogout} className="text-blue-600 hover:underline">
+            <div className="text-right text-sm">
+              <p className="font-medium">{user.username}</p>
+              <button onClick={handleLogout} className="text-xs text-haze-500 hover:text-haze-100">
                 Log out
               </button>
             </div>
           ) : (
-            <span className="text-sm text-gray-500">Viewing as guest</span>
+            <span className="text-xs text-haze-500">Viewing as guest</span>
           )}
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-6 py-6 space-y-5">
         {loadError && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-            <p className="font-semibold text-red-900">Unable to load lot data</p>
-            <p className="text-sm text-red-700 mt-1">{loadError}</p>
+          <div className="panel border-signal-stop/50 p-5">
+            <p className="font-semibold text-signal-stop">Unable to load lot data</p>
+            <p className="text-sm text-haze-300 mt-1">{loadError}</p>
             <button
               onClick={loadLot}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="mt-3 px-4 py-2 bg-signal-stop text-white rounded-lg text-sm font-medium"
             >
               Retry
             </button>
           </div>
         )}
 
-        {loading && !loadError && <p className="text-gray-500">Loading lot data…</p>}
+        {loading && !loadError && <p className="text-haze-500">Loading lot data…</p>}
 
         {lot && !loadError && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Stat label="Carts in building" value={lot.building.cartsInBuilding} accent />
-              <Stat label="Carts in lot" value={lot.building.cartsInLot} />
+              <Stat label="In building" value={lot.building.cartsInBuilding} highlight />
+              <Stat label="In lot" value={lot.building.cartsInLot} />
               <Stat label="Fleet size" value={lot.building.fleetSize ?? "—"} />
               <Stat
                 label="Unaccounted"
                 value={lot.building.unaccounted}
-                alert={lot.building.unaccounted < 0}
+                alert={lot.building.unaccounted !== 0}
               />
             </div>
 
-            <section className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <h2 className="text-xl font-semibold text-gray-900">Lot Map</h2>
-                <Legend />
+            <div className="grid lg:grid-cols-3 gap-5">
+              <section className="panel p-5 lg:col-span-2">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <h2 className="label">Lot map</h2>
+                  <Legend />
+                </div>
+                <LotMap
+                  counts={lot.counts}
+                  route={route?.optimizedRoute || []}
+                  selected={selected}
+                  onSelect={setSelected}
+                />
+              </section>
+
+              <div className="space-y-5">
+                <section className="panel p-5">
+                  <h2 className="label mb-3">Next job</h2>
+                  <button
+                    onClick={planRoute}
+                    disabled={routeLoading}
+                    className="w-full px-4 py-2.5 bg-signal-route text-ink-900 rounded-lg font-semibold
+                      hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    {routeLoading ? "Planning…" : "Plan Route"}
+                  </button>
+                  {routeError && <p className="mt-3 text-sm text-signal-stop">{routeError}</p>}
+                  {route && <RouteResult route={route} />}
+                </section>
+
+                {selected ? (
+                  <CorralDetail
+                    apiBase={API_BASE}
+                    corralId={selected}
+                    corral={selectedCorral}
+                    count={lot.counts[selected] ?? 0}
+                    onClose={() => setSelected(null)}
+                  />
+                ) : (
+                  <section className="panel p-5">
+                    <h2 className="label mb-2">Corral detail</h2>
+                    <p className="text-sm text-haze-500">
+                      Select a corral on the map to see its count and recent history.
+                    </p>
+                  </section>
+                )}
               </div>
-              <LotMap
-                counts={lot.counts}
-                route={route?.optimizedRoute || []}
-                selected={selected}
-                onSelect={setSelected}
-              />
-            </section>
+            </div>
 
-            <section className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900">Next Job</h2>
-              <button
-                onClick={getRoute}
-                disabled={routeLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-                  disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {routeLoading ? "Planning…" : "Plan Route"}
-              </button>
-              {routeError && <p className="mt-3 text-sm text-red-700">{routeError}</p>}
-              {route && <RouteResult route={route} />}
-            </section>
-
-            <section className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900">Update a Corral</h2>
+            <section className="panel p-5">
+              <h2 className="label mb-3">Update a corral</h2>
               {token ? (
                 <UpdateForm
                   apiBase={API_BASE}
                   token={token}
                   corrals={lot.corrals}
-                  onUpdate={(next) => setLot(next)}
+                  onUpdate={setLot}
                   onAuthExpired={handleLogout}
                 />
               ) : (
@@ -179,84 +210,78 @@ function App() {
 }
 
 function Legend() {
+  const items = [
+    ["bg-signal-go", "Healthy"],
+    ["bg-signal-watch", "Watch"],
+    ["bg-signal-stop", "Needs action"],
+  ];
   return (
-    <div className="flex flex-wrap gap-4 text-xs text-gray-700">
-      <span className="flex items-center gap-1.5">
-        <i className="w-3 h-3 rounded bg-[#16a34a] inline-block" /> Healthy
-      </span>
-      <span className="flex items-center gap-1.5">
-        <i className="w-3 h-3 rounded bg-[#eab308] inline-block" /> Watch
-      </span>
-      <span className="flex items-center gap-1.5">
-        <i className="w-3 h-3 rounded bg-[#dc2626] inline-block" /> Needs action
-      </span>
-      <span className="text-gray-500">
-        Lot corrals turn red when full · storefront corrals when empty
-      </span>
+    <div className="flex flex-wrap items-center gap-3 text-xs text-haze-300">
+      {items.map(([cls, text]) => (
+        <span key={text} className="flex items-center gap-1.5">
+          <i className={`w-2.5 h-2.5 rounded-sm ${cls} inline-block`} />
+          {text}
+        </span>
+      ))}
+      <span className="text-haze-500">lot red when full · storefront red when empty</span>
     </div>
   );
 }
 
-function Stat({ label, value, accent, alert }) {
+function Stat({ label, value, highlight, alert }) {
   return (
     <div
-      className={`bg-white rounded-lg shadow p-4 ${accent ? "border-2 border-blue-500" : ""} ${
-        alert ? "border-2 border-red-500" : ""
+      className={`panel p-4 ${highlight ? "border-signal-route/40" : ""} ${
+        alert ? "border-signal-watch/50" : ""
       }`}
     >
-      <div className="text-3xl font-bold text-gray-900">{value}</div>
-      <div className="text-sm text-gray-600 mt-1">{label}</div>
+      <p className="label">{label}</p>
+      <p className="text-3xl font-bold tabular-nums mt-1">{value}</p>
     </div>
   );
 }
 
 function RouteResult({ route }) {
-  const JOB_LABEL = {
-    restock: "Restock the storefront",
-    collection: "Collection sweep",
-    idle: "Nothing urgent",
-  };
+  const job = JOB[route.job] || { label: route.job, tone: "text-haze-100" };
 
   return (
     <div className="mt-4 space-y-3">
       <div>
-        <p className="text-lg font-semibold text-gray-900">{JOB_LABEL[route.job] || route.job}</p>
-        <p className="text-sm text-gray-600">{route.reason}</p>
+        <p className={`font-semibold ${job.tone}`}>{job.label}</p>
+        <p className="text-sm text-haze-300 mt-0.5">{route.reason}</p>
       </div>
 
       {route.optimizedRoute?.length > 0 && (
         <>
-          <p className="font-mono text-gray-900 break-words">{route.optimizedRoute.join(" → ")}</p>
-          <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
-            <span>
-              <dt className="inline font-medium">Stops: </dt>
-              <dd className="inline">{route.corralsCovered}</dd>
-            </span>
-            {route.totalDistance != null && (
-              <span>
-                <dt className="inline font-medium">Walking distance: </dt>
-                <dd className="inline">{Math.round(route.totalDistance)} ft</dd>
-              </span>
-            )}
-            {route.cartsMoved != null && (
-              <span>
-                <dt className="inline font-medium">Carts: </dt>
-                <dd className="inline">{route.cartsMoved}</dd>
-              </span>
-            )}
-            <span>
-              <dt className="inline font-medium">Method: </dt>
-              <dd className="inline">{route.method}</dd>
-            </span>
+          <p className="font-mono text-sm break-words bg-ink-700 rounded-lg p-3 leading-relaxed">
+            {route.optimizedRoute.join(" → ")}
+          </p>
+          <dl className="grid grid-cols-3 gap-2 text-center">
+            <Metric label="Stops" value={route.corralsCovered} />
+            <Metric
+              label="Distance"
+              value={route.totalDistance != null ? `${Math.round(route.totalDistance)} ft` : "—"}
+            />
+            <Metric label="Carts" value={route.cartsMoved ?? "—"} />
           </dl>
+          <p className="text-[11px] text-haze-500 text-center">solver: {route.method}</p>
         </>
       )}
 
       {route.degraded && (
-        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+        <p className="text-sm text-signal-watch bg-signal-watch/10 border border-signal-watch/30 rounded-lg p-3">
           {route.note}
         </p>
       )}
+    </div>
+  );
+}
+
+function Metric({ label, value }) {
+  return (
+    <div className="bg-ink-700 rounded-lg py-2">
+      <p className="text-lg font-bold tabular-nums">{value}</p>
+      <p className="text-[11px] text-haze-500">{label}</p>
     </div>
   );
 }

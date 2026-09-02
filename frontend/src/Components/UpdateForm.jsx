@@ -1,5 +1,9 @@
 import { useState } from "react";
 
+const FIELD =
+  "px-3 py-2 bg-ink-700 border border-ink-600 rounded-lg text-haze-100 " +
+  "placeholder:text-haze-500 focus:outline-none focus:ring-2 focus:ring-signal-route";
+
 function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired }) {
   const [corral, setCorral] = useState("");
   const [count, setCount] = useState("");
@@ -56,7 +60,7 @@ function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired
           value={corral}
           onChange={(e) => setCorral(e.target.value)}
           aria-label="Corral"
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={FIELD}
         >
           <option value="">Select a corral…</option>
           {corrals.map((c) => (
@@ -72,20 +76,24 @@ function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired
           value={count}
           onChange={(e) => setCount(e.target.value)}
           aria-label="Cart count"
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={FIELD}
         />
         <button
           type="submit"
           disabled={submitting}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-            disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-signal-route text-ink-900 rounded-lg font-semibold
+            hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {submitting ? "Saving…" : "Update"}
         </button>
       </div>
 
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      {success && <p className="text-sm text-green-700">{success}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-signal-stop">
+          {error}
+        </p>
+      )}
+      {success && <p className="text-sm text-signal-go">{success}</p>}
     </form>
   );
 }
