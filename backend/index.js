@@ -14,6 +14,8 @@ app.use('/api/shifts', require('./routes/shifts'));
 app.use('/api/corrals', require('./routes/corrals'));
 app.use('/api/building', require('./routes/building'));
 app.use('/api/optimize-route', require('./routes/optimize'));
+app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/weather', require('./routes/weather'));
 
 app.get('/', (req, res) => {
   res.json({ service: 'cart-corral-backend', status: 'running' });
@@ -56,6 +58,8 @@ async function start() {
     console.log('  GET  /api/building              Carts inside the store');
     console.log('  POST /api/building              Update building count (auth)');
     console.log('  GET  /api/optimize-route        Next job + route');
+    console.log('  GET  /api/analytics             Aggregated lot history');
+    console.log('  GET  /api/weather               Current conditions');
     console.log('  GET  /api/shifts                Worker shifts (stub)');
   });
 

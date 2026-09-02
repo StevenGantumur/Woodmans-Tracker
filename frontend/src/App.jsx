@@ -4,6 +4,7 @@ import LotMap from "./Components/LotMap";
 import CorralDetail from "./Components/CorralDetail";
 import UpdateForm from "./Components/UpdateForm";
 import LoginForm from "./Components/LoginForm";
+import Analytics from "./Components/Analytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
 
@@ -22,6 +23,8 @@ function App() {
   const [route, setRoute] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState(null);
+
+  const [view, setView] = useState("dashboard");
 
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [user, setUser] = useState(null);
@@ -98,6 +101,22 @@ function App() {
               <p className="text-xs text-haze-500">Woodman's Food Market · live lot operations</p>
             </div>
           </div>
+          <nav className="flex gap-1.5 ml-auto mr-4">
+            {["dashboard", "analytics"].map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`cut-sm px-3 py-1.5 text-sm font-medium capitalize transition ${
+                  view === v
+                    ? "bg-ink-600 text-haze-100"
+                    : "text-haze-500 hover:text-haze-100"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </nav>
+
           {user ? (
             <div className="text-right text-sm">
               <p className="font-medium">{user.username}</p>
@@ -112,7 +131,9 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-5">
-        {loadError && (
+        {view === "analytics" && <Analytics apiBase={API_BASE} />}
+
+        {view === "dashboard" && loadError && (
           <div className="panel border-signal-stop/50 p-5">
             <p className="font-semibold text-signal-stop">Unable to load lot data</p>
             <p className="text-sm text-haze-300 mt-1">{loadError}</p>
@@ -127,7 +148,7 @@ function App() {
 
         {loading && !loadError && <p className="text-haze-500">Loading lot data…</p>}
 
-        {lot && !loadError && (
+        {view === "dashboard" && lot && !loadError && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Stat label="In building" value={lot.building.cartsInBuilding} highlight />
