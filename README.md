@@ -261,6 +261,11 @@ all move together in one click. It is the fastest way to see the two job types:
 run it a few times and it will swing between a collection sweep and a restock,
 depending on where the carts land.
 
+Carts are weighted heavily toward the rows nearest the doors, with an occasional
+spike on one corral, so a simulated lot has a handful of corrals clearly worth
+walking to rather than 21 sitting at the same average. A typical sweep comes out
+around 200 to 240 carts across 14 to 18 corrals.
+
 Every count stays consistent with a fixed fleet of 600 carts. The Cart Tunnel is
 treated as the reservoir and takes whatever the rest of the store is not holding,
 so the books always balance and the "unaccounted" tile stays at zero.

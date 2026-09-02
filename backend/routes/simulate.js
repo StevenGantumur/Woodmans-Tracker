@@ -15,21 +15,30 @@ const RESERVOIR_MIN_CAPACITY = 200;
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-// Corrals nearer the doors fill faster, and the hour of day scales the whole lot.
-// Weights are relative and get normalised against a target below, so the lot can
-// never hold more carts than the store owns.
+// Carts pile up unevenly: the rows nearest the doors take most of the traffic
+// while the back of the lot barely fills. Weighting hard by row is what produces
+// a lot worth walking out to, with a few corrals clearly demanding attention
+// rather than every corral sitting at a uniform average.
 function returnWeight(corral, hour) {
-  const timeFactor = hour >= 11 && hour <= 19 ? 1 : hour >= 8 && hour <= 22 ? 0.6 : 0.25;
-  const proximity = 1.25 - (corral.y / 100) * 0.4;
-  return Math.max(0.05, timeFactor * proximity * (0.5 + Math.random()));
+  const timeFactor = hour >= 11 && hour <= 19 ? 1 : hour >= 8 && hour <= 22 ? 0.7 : 0.35;
+
+  // y is 0 at the front row, 100 at the back.
+  const row = corral.y / 50;
+  const proximity = [2.6, 1.2, 0.5][row] ?? 1;
+
+  // Occasional spike: one corral that had a run on it.
+  const spike = Math.random() < 0.22 ? 1.7 + Math.random() * 0.7 : 1;
+
+  return Math.max(0.05, timeFactor * proximity * spike * (0.6 + Math.random() * 0.8));
 }
 
-// Share of the fleet loose in the return corrals. Most carts are inside, with a
-// shopper, or staged in the tunnel, so the open lot holds a minority of them.
+// Share of the fleet waiting in the return corrals. These are the corrals that
+// await collection, so they hold a real load: at peak most of the fleet is either
+// with a shopper or sitting in the lot, and the tunnel runs down.
 function lotShare(hour) {
-  if (hour >= 11 && hour <= 19) return 0.16 + Math.random() * 0.11;
-  if (hour >= 8 && hour <= 22) return 0.1 + Math.random() * 0.08;
-  return 0.04 + Math.random() * 0.05;
+  if (hour >= 11 && hour <= 19) return 0.4 + Math.random() * 0.14;
+  if (hour >= 8 && hour <= 22) return 0.33 + Math.random() * 0.13;
+  return 0.18 + Math.random() * 0.1;
 }
 
 router.post('/', async (req, res) => {
@@ -73,7 +82,7 @@ router.post('/', async (req, res) => {
 
     // Carts with shoppers or parked inside. Reserved before the tunnel is filled
     // so the tunnel cannot swallow the whole fleet.
-    const inBuilding = Math.round(fleet * (0.2 + Math.random() * 0.2));
+    const inBuilding = Math.round(fleet * (0.14 + Math.random() * 0.14));
 
     const spokenFor =
       returnCounts.reduce((s, u) => s + u.count, 0) +
