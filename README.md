@@ -294,6 +294,27 @@ Being upfront about what is not done:
 * Training data is synthetic. See the honesty note above.
 * One worker at a time. Splitting corrals between people on shift is not modeled.
 
+# Where This Is Going
+
+This is a prototype, and it leans more visual than production. The lot state is
+simulated rather than sensed. What runs underneath it is real: the route is
+solved with OR-Tools over measured distances, the counts are stored in
+PostgreSQL, and the model is trained on the snapshot history. It is proof the
+idea works, not a finished product.
+
+The next thing I want to build is a simulation page that proves the point
+directly, that a worker who can see the best route on a device beats a worker
+walking the lot looking for full corrals. Right now that time goes into guessing,
+doubling back, and clearing a corral somebody already got. I think the difference
+is real and I would rather measure it than claim it.
+
+I worked carts. It is a lot of walking and a lot of guessing, and most of that is
+avoidable. Done right this cuts the physical strain of the job and gives cart
+workers back time and better tools to succeed at it. I would like to see it
+running at a real store at scale someday. Getting there takes a lot of RFID
+sensors and production level design work, which is not a small lift, but none of
+it is out of reach.
+
 # Road Map
 
 1. Expose predictions through the API and show them on the map

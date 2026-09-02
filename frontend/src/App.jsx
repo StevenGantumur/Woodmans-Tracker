@@ -5,6 +5,7 @@ import CorralDetail from "./Components/CorralDetail";
 import UpdateForm from "./Components/UpdateForm";
 import LoginForm from "./Components/LoginForm";
 import Analytics from "./Components/Analytics";
+import Disclaimer from "./Components/Disclaimer";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
 
@@ -274,6 +275,7 @@ function App() {
             </section>
           </>
         )}
+        <Disclaimer />
       </main>
     </div>
   );
