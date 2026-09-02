@@ -118,7 +118,7 @@ function App() {
             <p className="text-sm text-haze-300 mt-1">{loadError}</p>
             <button
               onClick={loadLot}
-              className="mt-3 px-4 py-2 bg-signal-stop text-white rounded-lg text-sm font-medium"
+              className="btn cut-sm mt-3 bg-signal-stop text-white text-sm"
             >
               Retry
             </button>
@@ -160,8 +160,7 @@ function App() {
                   <button
                     onClick={planRoute}
                     disabled={routeLoading}
-                    className="w-full px-4 py-2.5 bg-signal-route text-ink-900 rounded-lg font-semibold
-                      hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="btn cut-sm w-full py-2.5"
                   >
                     {routeLoading ? "Planning…" : "Plan Route"}
                   </button>
@@ -253,7 +252,7 @@ function RouteResult({ route }) {
 
       {route.optimizedRoute?.length > 0 && (
         <>
-          <p className="font-mono text-sm break-words bg-ink-700 rounded-lg p-3 leading-relaxed">
+          <p className="font-mono text-sm break-words bg-ink-700 cut-sm p-3 leading-relaxed">
             {route.optimizedRoute.join(" → ")}
           </p>
           <dl className="grid grid-cols-3 gap-2 text-center">
@@ -269,7 +268,7 @@ function RouteResult({ route }) {
       )}
 
       {route.degraded && (
-        <p className="text-sm text-signal-watch bg-signal-watch/10 border border-signal-watch/30 rounded-lg p-3">
+        <p className="text-sm text-signal-watch bg-signal-watch/10 border border-signal-watch/30 cut-sm p-3">
           {route.note}
         </p>
       )}
@@ -279,7 +278,7 @@ function RouteResult({ route }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="bg-ink-700 rounded-lg py-2">
+    <div className="bg-ink-700 cut-sm py-2">
       <p className="text-lg font-bold tabular-nums">{value}</p>
       <p className="text-[11px] text-haze-500">{label}</p>
     </div>

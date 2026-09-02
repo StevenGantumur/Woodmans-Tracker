@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-const FIELD =
-  "px-3 py-2 bg-ink-700 border border-ink-600 rounded-lg text-haze-100 " +
-  "placeholder:text-haze-500 focus:outline-none focus:ring-2 focus:ring-signal-route";
-
 function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired }) {
   const [corral, setCorral] = useState("");
   const [count, setCount] = useState("");
@@ -60,7 +56,7 @@ function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired
           value={corral}
           onChange={(e) => setCorral(e.target.value)}
           aria-label="Corral"
-          className={FIELD}
+          className="field"
         >
           <option value="">Select a corral…</option>
           {corrals.map((c) => (
@@ -76,13 +72,12 @@ function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired
           value={count}
           onChange={(e) => setCount(e.target.value)}
           aria-label="Cart count"
-          className={FIELD}
+          className="field"
         />
         <button
           type="submit"
           disabled={submitting}
-          className="px-4 py-2 bg-signal-route text-ink-900 rounded-lg font-semibold
-            hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="btn cut-sm"
         >
           {submitting ? "Saving…" : "Update"}
         </button>

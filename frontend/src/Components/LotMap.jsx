@@ -19,9 +19,9 @@ const VIEW_H = MAX_Y - MIN_Y + PAD_TOP + PAD_BOTTOM;
 const px = (x) => x - MIN_X + PAD_X;
 const py = (y) => y - MIN_Y + PAD_TOP;
 
-const RETURN_W = 50;
-const RETURN_H = 30;
-const SUPPLY_H = 34;
+const RETURN_W = 34;
+const RETURN_H = 48;
+const SUPPLY_H = 44;
 
 const FILL = {
   critical: "#ef4444",
@@ -68,7 +68,7 @@ function LotMap({ counts = {}, route = [], selected, onSelect }) {
           </pattern>
         </defs>
 
-        <rect width={VIEW_W} height={VIEW_H} fill="url(#asphalt)" rx="10" />
+        <rect width={VIEW_W} height={VIEW_H} fill="url(#asphalt)" />
 
         {/* The store along the top edge. */}
         <rect
@@ -79,7 +79,6 @@ function LotMap({ counts = {}, route = [], selected, onSelect }) {
           fill="#2b2b2b"
           stroke="#3d3d3d"
           strokeWidth="2"
-          rx="6"
         />
         <text
           x={VIEW_W / 2}
@@ -142,14 +141,13 @@ function LotMap({ counts = {}, route = [], selected, onSelect }) {
                 fillOpacity={isSelected ? 1 : 0.9}
                 stroke={isSelected ? "#ededed" : order >= 0 ? "#38bdf8" : "#0d0d0d"}
                 strokeWidth={isSelected ? 4 : order >= 0 ? 3 : 1.5}
-                rx="4"
               />
               <text
                 x={px(c.x)}
-                y={py(c.y) - 1}
+                y={py(c.y) - 4}
                 textAnchor="middle"
                 fill="#0d0d0d"
-                fontSize="16"
+                fontSize="15"
                 fontWeight="800"
               >
                 {c.id}
@@ -159,7 +157,7 @@ function LotMap({ counts = {}, route = [], selected, onSelect }) {
                 y={py(c.y) + 13}
                 textAnchor="middle"
                 fill="#0d0d0d"
-                fontSize="12"
+                fontSize="11"
                 fontWeight="600"
               >
                 {count}

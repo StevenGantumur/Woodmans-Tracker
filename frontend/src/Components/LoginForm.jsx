@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-const FIELD =
-  "w-full px-3 py-2 bg-ink-700 border border-ink-600 rounded-lg text-haze-100 " +
-  "placeholder:text-haze-500 focus:outline-none focus:ring-2 focus:ring-signal-route";
-
 function LoginForm({ apiBase, onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +36,7 @@ function LoginForm({ apiBase, onLogin }) {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         aria-label="Username"
-        className={FIELD}
+        className="field"
       />
       <input
         type="password"
@@ -49,13 +45,12 @@ function LoginForm({ apiBase, onLogin }) {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         aria-label="Password"
-        className={FIELD}
+        className="field"
       />
       <button
         type="submit"
         disabled={submitting}
-        className="px-4 py-2 bg-signal-route text-ink-900 rounded-lg font-semibold
-          hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="btn cut-sm"
       >
         {submitting ? "Logging in…" : "Log in"}
       </button>

@@ -70,7 +70,7 @@ function CorralDetail({ apiBase, corralId, corral, count, onClose }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-ink-700 rounded-lg p-3">
+        <div className="bg-ink-700 cut-sm p-3">
           <p className="label">Carts</p>
           <p className="text-2xl font-bold tabular-nums">
             {count}
@@ -79,7 +79,7 @@ function CorralDetail({ apiBase, corralId, corral, count, onClose }) {
             )}
           </p>
         </div>
-        <div className="bg-ink-700 rounded-lg p-3">
+        <div className="bg-ink-700 cut-sm p-3">
           <p className="label">Position</p>
           <p className="text-2xl font-bold tabular-nums">
             {corral.x}

@@ -5,7 +5,7 @@
 @layer base {
   body {
     @apply text-haze-100 antialiased;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 
     /* Faded charcoal: a soft pool of light in the middle falling off to near
        black at the edges, over a fine brushed texture. Fixed so the glow stays
@@ -33,16 +33,70 @@
 }
 
 @layer components {
-  /* Slightly translucent so the background glow reads through the panels
-     instead of flattening them into solid blocks. */
+  /* Chamfered corners instead of radii. Two opposite corners are cut, which
+     reads as drafted equipment rather than a generic rounded card. The border
+     is the element's own background showing through a 1px inset, because
+     clip-path crops a real border away. */
   .panel {
-    @apply border border-ink-600/70 rounded-xl;
-    background-color: rgb(28 28 28 / 0.72);
-    backdrop-filter: blur(2px);
+    --cut: 14px;
+    position: relative;
+    background: #3a3a3a;
+    clip-path: polygon(
+      var(--cut) 0,
+      100% 0,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0 100%,
+      0 var(--cut)
+    );
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    background: linear-gradient(#212121, #1a1a1a);
+    clip-path: polygon(
+      calc(var(--cut) - 1px) 0,
+      100% 0,
+      100% calc(100% - var(--cut) + 1px),
+      calc(100% - var(--cut) + 1px) 100%,
+      0 100%,
+      0 calc(var(--cut) - 1px)
+    );
+  }
+
+  /* Content has to sit above the ::before fill. */
+  .panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cut-sm {
+    --cut: 8px;
+    clip-path: polygon(
+      var(--cut) 0,
+      100% 0,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0 100%,
+      0 var(--cut)
+    );
   }
 
   .label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-haze-500;
+    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-haze-500;
+  }
+
+  .field {
+    @apply px-3 py-2 bg-ink-700 border border-ink-600 text-haze-100 rounded-none
+      placeholder:text-haze-500 focus:outline-none focus:border-signal-route;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  .btn {
+    @apply px-4 py-2 font-semibold tracking-wide bg-signal-route text-ink-900
+      hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition;
   }
 }
 
