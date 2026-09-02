@@ -41,10 +41,10 @@ def engineerFeatures(df):
     """
     # For the hour
     df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
-    df['hour_cod'] = np.cos(2 * np.pi * df['hour'] / 24)
+    df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
     # For the day of week
-    df['dow_sin'] = np.sin(2 * np.pi * df['day_of_week' / 7])
-    df['dow_cos'] = np.cos(2 * np.pi * df['day_of_week' / 7])
+    df['dow_sin'] = np.sin(2 * np.pi * df['day_of_week'] / 7)
+    df['dow_cos'] = np.cos(2 * np.pi * df['day_of_week'] / 7)
 
     # Weekend
     df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
@@ -79,7 +79,12 @@ def aggregateTraining(df):
     agg_df = agg_df.rename(columns={
         'cart_count_mean': 'avg_cart_count',
         'cart_count_std': 'cart_count_std',
-        'cart_count_count': 'num_observations'
+        'cart_count_count': 'num_observations',
+        'hour_sin_first': 'hour_sin',
+        'hour_cos_first': 'hour_cos',
+        'dow_sin_first': 'dow_sin',
+        'dow_cos_first': 'dow_cos',
+        'is_weekend_first': 'is_weekend'
     })
 
     # Filter unnecessary low observations
@@ -100,7 +105,9 @@ def prepareTrainingData():
     df = loadDataFromDB()
 
     if len(df) == 0:
-        raise ValueError("No data, run that fake generation dumbass")
+        raise ValueError(
+            "No snapshots found. Seed the database first: node scripts/generateData.js"
+        )
     
     df = engineerFeatures(df)
 

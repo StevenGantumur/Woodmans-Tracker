@@ -1,45 +1,38 @@
-// CorralList.jsx
+import { useEffect, useState } from "react";
 
-// Importing React hooks
-import { useEffect, useState } from "react"
-
-// Define the CorralList function, and corrals is taken as a prop from App.jsx
 function CorralList({ corrals, lastUpdated }) {
-    // State to track which corral is being highlighted
-    const [highlight, setHighlight] = useState(null);
+  const [highlight, setHighlight] = useState(null);
 
-    // Whenever corral changes or updates, useEffect runs
-    useEffect(() => {
-        // We only want this to run if we have data
-        if(lastUpdated) {
+  useEffect(() => {
+    if (!lastUpdated) return;
+    setHighlight(lastUpdated);
+    const timer = setTimeout(() => setHighlight(null), 2000);
+    // Clears the pending timer if another update lands first, so the highlight
+    // does not get cancelled early by the previous corral's timeout.
+    return () => clearTimeout(timer);
+  }, [lastUpdated]);
 
-            // We want to store the corral ID in state, which tells react which one to highlight
-            // vvv
-            setHighlight(lastUpdated);
+  const entries = Object.entries(corrals);
+  if (entries.length === 0) {
+    return <p className="text-gray-500">No corral data available.</p>;
+  }
 
-            // After two seconds reset the highlight back to null
-            const timer = setTimeout(() => setHighlight(null), 2000)
-
-            // Cleanup: If the corral updates before the old timer, clear the timer.
-            return () => clearTimeout(timer);
-        }
-    }, [lastUpdated]); // Runs this effect every time a corral is updated
-    return (
-        <ul>
-            {Object.entries(corrals).map(([id, count]) => (
-                <li
-                    key={id}
-                    style={{
-                        fontWeight: id === highlight ? "bold" : "normal",
-                        color: id === highlight ? "green" : "black",
-                        transition: "all 0.3s ease",
-                    }}
-                >
-                    Corral {id}: {count} carts
-                </li>
-            ))}
-        </ul>
-    );
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {entries.map(([id, count]) => (
+        <li
+          key={id}
+          className={`px-3 py-1.5 rounded-full border text-sm transition-colors duration-300 ${
+            id === highlight
+              ? "bg-green-100 border-green-400 text-green-900 font-semibold"
+              : "bg-gray-50 border-gray-200 text-gray-700"
+          }`}
+        >
+          {id}: {count} {count === 1 ? "cart" : "carts"}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default CorralList;

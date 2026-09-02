@@ -1,102 +1,93 @@
-// UpdateForm.jsx
-
-// Import useState from React so we can track user input values (corral + count)
 import { useState } from "react";
+import ALLOWED_CORRALS from "../../../shared/corrals.json";
 
-import ALLOWED_CORRALS from '../../../shared/corrals.json';
+function UpdateForm({ onUpdate, apiBase = "" }) {
+  const [corral, setCorral] = useState("");
+  const [count, setCount] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-// Declares new function named UpdateForm
-function UpdateForm({ updateCorrals, apiBase = '' }) {
-    // Sets up pieces of state called corral and count. Starting as empty string, ''.
-    // Name is setCorral and setCount
-        // setCorral is the function to update value of Corral, setCount is the count.
-    const [corral, setCorral] = useState('');
-    const [count, setCount] = useState('');
-    const [error, setError] = useState('');
+  // Mirrors the server's rules so obvious mistakes are caught without a round trip.
+  // The server revalidates regardless — client checks are for feedback, not enforcement.
+  const validate = (id, parsedCount) => {
+    if (!id) return "Corral is required";
+    if (!ALLOWED_CORRALS.includes(id)) return `Unknown corral. Use A through ${ALLOWED_CORRALS.at(-1)}.`;
+    if (count === "" || Number.isNaN(parsedCount)) return "Count must be a number";
+    if (!Number.isInteger(parsedCount) || parsedCount < 0) return "Count must be a non-negative integer";
+    return null;
+  };
 
-    // Called when form is submitted
-    const handleSubmit = async (e) => {
-        // Prevents reloading the page (default form behavior)
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-        const normalizedId = corral.trim().toUpperCase();
-        const parsedCount = Number(count);
+    const id = corral.trim().toUpperCase();
+    const parsedCount = Number(count);
 
-        if(!normalizedId) {
-            setError('Corral is required');
-            return;
-        }
-        if(!ALLOWED_CORRALS.includes(normalizedId)) {
-            setError(`Unknown corral. Use one of: ${ALLOWED_CORRALS.join(', ')}`);
-            return;
-        }
-        if(Number.isNaN(parsedCount) || !Number.isFinite(parsedCount)) {
-            setError('Count must be a number');
-            return;
-        }
-        if(!Number.isInteger(parsedCount) || parsedCount < 0) {
-            setError('Count must be a non-negative integer');
-            return;
-        }
-        setError('');
-        
-        try {
-            // send a POST request to backend API
-            const res = await fetch(`${apiBase}/api/corrals`, {
-                method: 'POST', // Tells server this is a POST request
-                headers: {
-                    'Content-Type': 'application/json', // Sending JSON data
-                },
-                // Turn JS object into a JSON string for sending
-                body: JSON.stringify({
-                    corral_id: normalizedId,  // User entered corral ID
-                    count: parsedCount, // User entered count (NOTE: This will be replaced by a real time update through RFID sensors in corrals)
-                }),
-            });
-            
-            // Checks if the server is OK, if not throws error
-            if(!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
+    const validationError = validate(id, parsedCount);
+    if (validationError) return setError(validationError);
 
-            // Convert the server response from a JSON String into a JS Object
-            const data = await res.json();
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${apiBase}/api/corrals`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ corral_id: id, count: parsedCount }),
+      });
 
-            console.log("POST response:", data); // Debug: see what backend sent back
+      const data = await res.json().catch(() => ({}));
 
-            // Call the function from App.jsx to update corrals state
-            updateCorrals(data.currentStatus, data.normalizedId || normalizedId);
+      // Previously this only logged to the console, so a failed save looked
+      // identical to a successful one from the user's side.
+      if (!res.ok) throw new Error(data.error || `Server responded ${res.status}`);
 
-            // Reset form fields back to empty strings
-            setCorral('');
-            setCount('');
-        }
-        catch (err) {
-            // If something goes wrong in fetch or response pairing, log it to see whats wrong
-            console.error("Error during POST", err)
-        }
-    };
+      onUpdate(data.currentStatus, data.normalizedId || id);
+      setSuccess(`Corral ${id} set to ${parsedCount} ${parsedCount === 1 ? "cart" : "carts"}`);
+      setCorral("");
+      setCount("");
+    } catch (err) {
+      setError(`Could not save. ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="flex flex-wrap gap-3">
+        <input
+          type="text"
+          placeholder="Corral (e.g. A)"
+          value={corral}
+          onChange={(e) => setCorral(e.target.value)}
+          aria-label="Corral letter"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <input
+          type="number"
+          min="0"
+          placeholder="Cart count"
+          value={count}
+          onChange={(e) => setCount(e.target.value)}
+          aria-label="Cart count"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          disabled={submitting}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
+            disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+        >
+          {submitting ? "Saving…" : "Update Corral"}
+        </button>
+      </div>
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <input
-                type="text"
-                placeholder="Corral Letter (e.g. A)"
-                value={corral}
-                onChange={(e) => setCorral(e.target.value)} // Update local state as user types
-            />
-            <input
-            type="number"
-            placeholder="Cart Count"
-            value={count}
-            onChange={(e) => setCount(e.target.value)}
-            />
-            <button type="submit">Update Corral</button>
-            {error && <div style={{ color: 'red', marginTop: '0.5rem' }}>{error}</div>}
-        </form>
-    )
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {success && <p className="text-sm text-green-700">{success}</p>}
+    </form>
+  );
 }
 
-//  Export component so App.jsx can import and render it
 export default UpdateForm;

@@ -1,16 +1,15 @@
-// backend/routes/shifts.js
-
-// This won't be worked on just yet, this is the shifts of each worker, but not the main workflow that I want to finish first.
 const express = require('express');
 const router = express.Router();
 
-const dummyShifts = [
-  { worker: "Alice", shift: "9AM - 1PM" },
-  { worker: "Bob", shift: "1PM - 5PM" }
+// Stub. Shift scheduling is planned but not implemented — there is no shifts
+// table yet, so this returns fixed sample data and flags itself as such.
+const SAMPLE_SHIFTS = [
+  { worker: 'Alice', shift: '9AM - 1PM' },
+  { worker: 'Bob', shift: '1PM - 5PM' },
 ];
 
 router.get('/', (req, res) => {
-  res.json(dummyShifts);
+  res.json({ implemented: false, shifts: SAMPLE_SHIFTS });
 });
 
 module.exports = router;

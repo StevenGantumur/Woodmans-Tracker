@@ -1,52 +1,68 @@
-// backend/index.js
 const express = require('express');
-const app = express();
-const PORT = 3001;
-
-// Initializes the cors backend support
 const cors = require('cors');
 
+const { pool, checkConnection } = require('./db');
+
+const app = express();
+const PORT = Number(process.env.PORT) || 3001;
+
 app.use(cors());
-app.use(express.json()); // Parse JSON requests
+app.use(express.json());
 
-// Import routes
-const shiftRoutes = require('./routes/shifts');
-const corralRoutes = require('./routes/corrals');
-const optimizeRoutes = require('./routes/optimize');
-
-//in url when looking at /api/shifts itll show me the data for the shifts
-app.use('/api/shifts', shiftRoutes);
-//same logic here
-app.use('/api/corrals', corralRoutes);
-// exact same logic again haha lol who knew
-app.use('/api/optimize-route', optimizeRoutes);
+app.use('/api/shifts', require('./routes/shifts'));
+app.use('/api/corrals', require('./routes/corrals'));
+app.use('/api/optimize-route', require('./routes/optimize'));
 
 app.get('/', (req, res) => {
-    //send is good for testing purposes, but not usually for actual product. (Gets sent into the website)
-  res.send('Backend is working!');
+  res.json({ service: 'cart-corral-backend', status: 'running' });
 });
 
-// Health check endpoint - Claude claims that it is good for production purposes. Monitoring tools can ping this to verify the server is responsive.
-app.get('/health', (req, res) => {
-  res.json({
-    // Status Field
-    status: 'healthy',
-    //Service Name
+// Reports database reachability, not just process liveness — a server that is up
+// but cannot reach Postgres is not actually serving traffic.
+app.get('/health', async (req, res) => {
+  const dbUp = await checkConnection();
+  res.status(dbUp ? 200 : 503).json({
+    status: dbUp ? 'healthy' : 'degraded',
     service: 'cart-corral-backend',
-    // When health checkup of server occurs
-    timestamp: new Date().toISOString()
+    database: dbUp ? 'connected' : 'unreachable',
+    timestamp: new Date().toISOString(),
   });
 });
 
-app.listen(PORT, () => {
-    //log sends it to the terminal
-  console.log(`Server running at http://localhost:${PORT}`);
-
-  console.log(`Endpoints available:`)
-  console.log(`GET /api/corrals - Get all corral counts`)
-  console.log(`POST /api/corrals - Update a corral`)
-  console.log(`POST /api/optimize-route - Get optimized collection route`)
-  console.log(`GET /api/shifts - Shift management (TBD WIP)`)
+app.use((req, res) => {
+  res.status(404).json({ error: `No route for ${req.method} ${req.path}` });
 });
 
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
+async function start() {
+  if (!(await checkConnection())) {
+    console.error('Refusing to start: database unreachable. Check .env and that Postgres is running.');
+    process.exit(1);
+  }
+
+  const server = app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+    console.log('  GET  /health                    Liveness + database check');
+    console.log('  GET  /api/corrals               Current cart counts');
+    console.log('  POST /api/corrals               Update one corral');
+    console.log('  GET  /api/corrals/:id/history   Recent snapshots');
+    console.log('  POST /api/optimize-route        Optimized collection route');
+    console.log('  GET  /api/shifts                Worker shifts (stub)');
+  });
+
+  // Without this the pool keeps the process alive and connections stay open on the DB.
+  const shutdown = async () => {
+    console.log('\nShutting down...');
+    server.close();
+    await pool.end();
+    process.exit(0);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+start();

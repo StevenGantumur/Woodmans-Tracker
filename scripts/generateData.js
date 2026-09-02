@@ -115,7 +115,7 @@ async function insertBatch(batch) {
 
         await pool.query(query, values);
     } catch (error) {
-        console.error(`Error inserting the batch, we fucked up: ${error.message}`);
+        console.error(`Failed to insert snapshot batch: ${error.message}`);
         throw error;
     }
 }
