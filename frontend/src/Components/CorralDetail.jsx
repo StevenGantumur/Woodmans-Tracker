@@ -57,7 +57,7 @@ function CorralDetail({ apiBase, corralId, corral, count, onClose }) {
     <aside className="panel p-5 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="label">{isSupply ? "Storefront corral" : "Lot corral"}</p>
+          <p className="label">{corral.label || (isSupply ? "Storefront corral" : "Lot corral")}</p>
           <h3 className="text-2xl font-bold">Corral {corralId}</h3>
         </div>
         <button

@@ -1,8 +1,8 @@
 {
-  "name": "woodmans-tracker",
+  "name": "cartdaddy",
   "private": true,
   "version": "1.0.0",
-  "description": "Root package for Woodmans Tracker workspaces",
+  "description": "Root package for CartDaddy workspaces",
   "scripts": {
     "dev": "npm run dev --workspace backend & npm run dev --workspace frontend",
     "dev:backend": "npm run dev --workspace backend",

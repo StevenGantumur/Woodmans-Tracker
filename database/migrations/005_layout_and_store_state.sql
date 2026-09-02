@@ -18,7 +18,7 @@ ALTER TABLE corrals ADD CONSTRAINT corrals_type_check
 CREATE TABLE IF NOT EXISTS store_state (
     id INTEGER PRIMARY KEY DEFAULT 1,
     carts_in_building INTEGER NOT NULL DEFAULT 0,
-    fleet_size INTEGER NOT NULL DEFAULT 400,
+    fleet_size INTEGER NOT NULL DEFAULT 600,
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT store_state_single_row CHECK (id = 1)
 );

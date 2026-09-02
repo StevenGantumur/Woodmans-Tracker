@@ -1,6 +1,6 @@
-# Cart Corral Tracker
+# CartDaddy
 
-I worked as a cart pusher at Woodman's, and the job came down to one question you
+I worked as a cart pusher at X, and the job came down to one question you
 answer badly all day: which corral do I walk to next? You guess, you walk, and half
 the time somebody else already cleared it or a closer one filled up behind you.
 
@@ -16,6 +16,9 @@ shortest route for that job, and predicts which corrals are about to fill up.
 * Falls back to a greedy sort if the solver is unavailable, clearly labeled as degraded
 * Cart count prediction by corral, hour, and day of week (LightGBM)
 * Tracked count of carts inside the building
+* Analytics view: peak hours, day of week patterns, busiest corrals
+* Current weather, translated into its expected effect on cart flow
+* A Simulate button that randomises the lot to a plausible state and re-plans
 * Every update writes a snapshot, so the history the model trains on keeps growing
 * JWT auth on writes; reads stay open so the app still demos without an account
 
@@ -37,9 +40,9 @@ kinds:
 
 * **21 return corrals** out in the parking lot, where shoppers leave carts.
   7 columns 130 ft apart, 3 rows 50 ft apart.
-* **3 supply corrals** at the storefront, where shoppers take carts. A long one in
-  the center flanked by a smaller one on each side, each 50 ft in front of the
-  nearest lot corral.
+* **3 supply corrals** at the storefront, where shoppers take carts: the Cart
+  Tunnel (V) in the center, flanked by Store Lot 1 (X) and Store Lot 2 (W), each
+  50 ft in front of the nearest lot corral.
 
 Because coordinates are in feet, route distances come back in a unit that means
 something to whoever has to walk it.
@@ -87,12 +90,12 @@ pip install -r ml/requirements.txt
 **2. Create the database**
 
 ```
-createdb woodmans_carts
-psql woodmans_carts -f database/migrations/001_create_corrals.sql
-psql woodmans_carts -f database/migrations/002_create_snapshots.sql
-psql woodmans_carts -f database/migrations/003_create_predictions.sql
-psql woodmans_carts -f database/migrations/004_create_users.sql
-psql woodmans_carts -f database/migrations/005_layout_and_store_state.sql
+createdb cartdaddy
+psql cartdaddy -f database/migrations/001_create_corrals.sql
+psql cartdaddy -f database/migrations/002_create_snapshots.sql
+psql cartdaddy -f database/migrations/003_create_predictions.sql
+psql cartdaddy -f database/migrations/004_create_users.sql
+psql cartdaddy -f database/migrations/005_layout_and_store_state.sql
 ```
 
 **3. Configure credentials**
@@ -144,6 +147,9 @@ Frontend on `http://localhost:5173`, API on `http://localhost:3001`.
 | POST | `/api/building` | token | Update the building count |
 | GET | `/api/optimize-route` | - | Next job and its route |
 | GET | `/api/optimize-route/preview` | - | Current optimizer configuration |
+| GET | `/api/analytics` | - | Aggregated history over N days |
+| GET | `/api/weather` | - | Current conditions and cart impact |
+| POST | `/api/simulate` | - | Randomise the lot (demo, flag-gated) |
 | GET | `/api/shifts` | - | Worker shifts (stub) |
 
 Asking what to do next:
@@ -229,6 +235,39 @@ shared/           Corral whitelist and lot layout
 docs/             Original design notes
 ```
 
+# Analytics
+
+A second view charts the snapshot history the database has been accumulating:
+average carts by hour, by day of week, and a ranking of the busiest corrals, over
+a 7, 30, or 90 day window. One endpoint returns all of it, since the four
+aggregates are always rendered together.
+
+The charts are hand drawn SVG rather than a charting dependency. Series colors
+were checked with a palette validator against the dark surface instead of picked
+by eye, single series charts carry no legend, only the peak hour is labelled
+directly, and a table view exposes the exact numbers.
+
+Weather is proxied through the API so the OpenWeather key stays server side and
+one cached call serves every client. Without a key the panel shows a setup hint
+rather than breaking; if the service is unreachable it serves the last good
+reading marked stale. Conditions are translated into an expected effect on cart
+flow, since rain and cold are what actually change how fast corrals fill.
+
+# Trying It Out
+
+The **Simulate** button randomises all 24 corrals to a plausible state and
+immediately re-plans against it, so the map, the counts, and the routing decision
+all move together in one click. It is the fastest way to see the two job types:
+run it a few times and it will swing between a collection sweep and a restock,
+depending on where the carts land.
+
+Every count stays consistent with a fixed fleet of 600 carts. The Cart Tunnel is
+treated as the reservoir and takes whatever the rest of the store is not holding,
+so the books always balance and the "unaccounted" tile stays at zero.
+
+Simulation is a write, so it sits behind `ALLOW_SIMULATE`. Set it to `false` to
+turn the button off for a real deployment.
+
 # Current Limitations
 
 Being upfront about what is not done:
@@ -244,7 +283,7 @@ Being upfront about what is not done:
 # Road Map
 
 1. Expose predictions through the API and show them on the map
-2. An analytics view: peak hours by corral, day of week patterns, predicted vs actual
+2. Predicted vs actual on the analytics view
 3. Real shift scheduling instead of the stub
 4. Sensor ingestion, with per device keys and smoothing over a rolling window
 5. Weather integration, since rain visibly changes how fast corrals fill

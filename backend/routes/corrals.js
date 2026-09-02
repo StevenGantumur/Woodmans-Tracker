@@ -3,6 +3,13 @@ const router = express.Router();
 
 const { pool } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const layout = require('../../shared/layout.json');
+
+// Names live in the layout file alongside the coordinates, so the API reports
+// them without a second place to keep in sync.
+const LABELS = Object.fromEntries(
+  layout.corrals.filter((c) => c.label).map((c) => [c.id, c.label])
+);
 
 const toMondayFirst = (jsDay) => (jsDay + 6) % 7;
 
@@ -12,6 +19,8 @@ async function readLot(client) {
        FROM corrals WHERE status = 'active' ORDER BY id`
   );
   const state = await client.query('SELECT carts_in_building, fleet_size FROM store_state WHERE id = 1');
+
+  for (const row of rows) row.label = LABELS[row.id] ?? null;
 
   const counts = Object.fromEntries(rows.map((r) => [r.id, r.cart_count]));
   const inBuilding = state.rows[0]?.carts_in_building ?? 0;

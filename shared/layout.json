@@ -1,5 +1,5 @@
 {
-  "_comment": "Store layout in feet. Origin (0,0) is the front-left return corral. +x runs right across the lot, +y runs away from the store. Supply corrals sit in front of the return grid at y=-50. Measurements are from the real Woodman's lot: 130 ft between columns, 50 ft between rows.",
+  "_comment": "Store layout in feet. Origin (0,0) is the front-left return corral. +x runs right across the lot, +y runs away from the store. Supply corrals sit in front of the return grid at y=-50. Measurements are from the real X lot: 130 ft between columns, 50 ft between rows.",
   "units": "feet",
   "spacing": {
     "column": 130,
@@ -182,8 +182,8 @@
       "type": "supply",
       "x": 390,
       "y": -50,
-      "capacity": 60,
-      "label": "Center entrance",
+      "capacity": 400,
+      "label": "Cart Tunnel",
       "width": 150
     },
     {
@@ -192,7 +192,7 @@
       "x": 520,
       "y": -50,
       "capacity": 40,
-      "label": "East entrance",
+      "label": "Store Lot 2",
       "width": 80
     },
     {
@@ -201,7 +201,7 @@
       "x": 260,
       "y": -50,
       "capacity": 40,
-      "label": "West entrance",
+      "label": "Store Lot 1",
       "width": 80
     }
   ],

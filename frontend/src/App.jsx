@@ -23,6 +23,7 @@ function App() {
   const [route, setRoute] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState(null);
+  const [simulating, setSimulating] = useState(false);
 
   const [view, setView] = useState("dashboard");
 
@@ -73,6 +74,23 @@ function App() {
     setUser(null);
   };
 
+  // Demo: randomise the whole lot, then immediately re-plan against it, so one
+  // click shows the counts, the map, and the routing decision all react together.
+  const simulateLot = async () => {
+    setSimulating(true);
+    setRouteError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/simulate`, { method: "POST" });
+      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      await loadLot();
+      await planRoute();
+    } catch (err) {
+      setRouteError(`Could not simulate. ${err.message}`);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
   const planRoute = async () => {
     setRouteLoading(true);
     setRouteError(null);
@@ -97,8 +115,8 @@ function App() {
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-signal-go animate-pulse" />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Cart Corral Tracker</h1>
-              <p className="text-xs text-haze-500">Woodman's Food Market · live lot operations</p>
+              <h1 className="text-lg font-bold tracking-tight">CartDaddy</h1>
+              <p className="text-xs text-haze-500">X · live lot operations</p>
             </div>
           </div>
           <nav className="flex gap-1.5 ml-auto mr-4">
@@ -178,13 +196,24 @@ function App() {
               <div className="space-y-5">
                 <section className="panel p-5">
                   <h2 className="label mb-3">Next job</h2>
-                  <button
-                    onClick={planRoute}
-                    disabled={routeLoading}
-                    className="btn cut-sm w-full py-2.5"
-                  >
-                    {routeLoading ? "Planning…" : "Plan Route"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={planRoute}
+                      disabled={routeLoading || simulating}
+                      className="btn cut-sm flex-1 py-2.5"
+                    >
+                      {routeLoading ? "Planning…" : "Plan Route"}
+                    </button>
+                    <button
+                      onClick={simulateLot}
+                      disabled={routeLoading || simulating}
+                      title="Randomise the lot to a plausible state, then re-plan"
+                      className="cut-sm px-3 py-2.5 bg-ink-700 text-haze-300 font-semibold
+                        hover:text-haze-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      {simulating ? "Simulating…" : "Simulate"}
+                    </button>
+                  </div>
                   {routeError && <p className="mt-3 text-sm text-signal-stop">{routeError}</p>}
                   {route && <RouteResult route={route} />}
                 </section>

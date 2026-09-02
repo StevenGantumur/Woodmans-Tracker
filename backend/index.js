@@ -16,9 +16,10 @@ app.use('/api/building', require('./routes/building'));
 app.use('/api/optimize-route', require('./routes/optimize'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/weather', require('./routes/weather'));
+app.use('/api/simulate', require('./routes/simulate'));
 
 app.get('/', (req, res) => {
-  res.json({ service: 'cart-corral-backend', status: 'running' });
+  res.json({ service: 'cartdaddy-backend', status: 'running' });
 });
 
 // Reports database reachability, not just process liveness — a server that is up
@@ -27,7 +28,7 @@ app.get('/health', async (req, res) => {
   const dbUp = await checkConnection();
   res.status(dbUp ? 200 : 503).json({
     status: dbUp ? 'healthy' : 'degraded',
-    service: 'cart-corral-backend',
+    service: 'cartdaddy-backend',
     database: dbUp ? 'connected' : 'unreachable',
     timestamp: new Date().toISOString(),
   });
@@ -60,6 +61,7 @@ async function start() {
     console.log('  GET  /api/optimize-route        Next job + route');
     console.log('  GET  /api/analytics             Aggregated lot history');
     console.log('  GET  /api/weather               Current conditions');
+    console.log('  POST /api/simulate              Randomise the lot (demo)');
     console.log('  GET  /api/shifts                Worker shifts (stub)');
   });
 

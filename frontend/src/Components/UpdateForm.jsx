@@ -61,7 +61,7 @@ function UpdateForm({ apiBase = "", token, corrals = [], onUpdate, onAuthExpired
           <option value="">Select a corral…</option>
           {corrals.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.id} · {c.type === "supply" ? "storefront" : "lot"}
+              {c.id} · {c.label || (c.type === "supply" ? "storefront" : "lot")}
             </option>
           ))}
         </select>

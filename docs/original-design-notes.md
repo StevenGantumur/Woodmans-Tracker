@@ -6,7 +6,7 @@ actually stand.
 
 ## The Idea
 
-An application containing the information a Woodman's cart worker needs to do the job
+An application containing the information an X cart worker needs to do the job
 well, and to take some of the physical stress off.
 
 ## Planned Features

@@ -89,7 +89,7 @@ function LotMap({ counts = {}, route = [], selected, onSelect }) {
           fontWeight="700"
           letterSpacing="3"
         >
-          WOODMAN'S FOOD MARKET
+          X
         </text>
 
         {routePath && (
@@ -163,6 +163,21 @@ function LotMap({ counts = {}, route = [], selected, onSelect }) {
                 {count}
                 {isSupply && c.capacity ? `/${c.capacity}` : ""}
               </text>
+
+              {/* Storefront corrals are named; lot corrals go by letter alone. */}
+              {isSupply && c.label && (
+                <text
+                  x={px(c.x)}
+                  y={py(c.y) - h / 2 - 9}
+                  textAnchor="middle"
+                  fill="#9a9a9a"
+                  fontSize="12"
+                  fontWeight="600"
+                  letterSpacing="0.5"
+                >
+                  {c.label}
+                </text>
+              )}
 
               {/* Position in the walking order. */}
               {order >= 0 && order < route.length - 1 && (
